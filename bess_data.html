@@ -1,0 +1,408 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar EMS | BESS Data</title>
+
+    <link rel="stylesheet" href="bess_data.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <img src="jove_logo.png" alt="Jove Multisystems Logo">
+            <div>
+                <h2>JOVE EMS</h2>
+                <span>Energy Management</span>
+            </div>
+            <button class="close-sidebar" id="closeSidebar" aria-label="Close menu">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-label">MAIN MENU</div>
+
+        <nav class="navigation">
+            <a class="nav-link" href="dashboard.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-group open">
+                <button class="nav-link nav-toggle" type="button">
+                    <i class="fa-solid fa-solar-panel"></i>
+                    <span>Plant Monitoring</span>
+                    <i class="fa-solid fa-chevron-down nav-arrow"></i>
+                </button>
+
+                <div class="submenu">
+                    <a href="plant_data.html">Plant Data</a>
+                    <a href="inverter_data.html">Inverter Data</a>
+                    <a href="energy_meter_data.html">Energy Meter Data</a>
+                    <a href="weather_data.html">Weather Data</a>
+                    <a href="bess_data.html" class="active">BESS Data</a>
+                    <a href="substation_data.html">Substation Data</a>
+                </div>
+            </div>
+
+            <a class="nav-link" href="alarm_data.html">
+                <i class="fa-solid fa-bell"></i>
+                <span>Alarms & Events</span>
+            </a>
+
+            <a class="nav-link" href="reports.html">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Reports</span>
+            </a>
+
+            <a class="nav-link" href="trends.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Trends</span>
+            </a>
+
+            <a class="nav-link" href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="connection-dot"></span>
+            <div>
+                <strong>BMS Interface</strong>
+                <small>Demo mode</small>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- HEADER -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="menu-button" id="menuButton" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <h1>BESS Data</h1>
+                    <p>Battery Energy Storage System monitoring and control overview</p>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <label class="plant-select-wrap">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <select id="plantSelect" aria-label="Select plant">
+                        <option value="Solar Plant 01">Solar Plant 01</option>
+                        <option value="Solar Plant 02">Solar Plant 02</option>
+                        <option value="Solar Plant 03">Solar Plant 03</option>
+                    </select>
+                </label>
+
+                <div class="header-date">
+                    <span id="currentDate">--</span>
+                    <strong id="currentTime">--:--:--</strong>
+                </div>
+
+                <button class="icon-button" id="notificationButton"
+                        title="Notifications" aria-label="Notifications">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+
+                <div class="user-profile">
+                    <img src="jove_logo.png" alt="Company">
+                    <div>
+                        <strong>Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- BESS SUMMARY -->
+        <section class="page-summary">
+            <div class="summary-left">
+                <div class="bess-summary-icon">
+                    <i class="fa-solid fa-car-battery"></i>
+                </div>
+                <div>
+                    <h2>Battery Storage Overview</h2>
+                    <p>
+                        <span class="status-dot"></span>
+                        <span id="systemStatus">BESS system online</span>
+                        <span class="summary-separator">|</span>
+                        Last updated: <span id="lastUpdated">--</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="summary-actions">
+                <span class="mode-badge" id="operatingMode">
+                    <i class="fa-solid fa-bolt"></i> Discharging
+                </span>
+                <button class="primary-button" id="refreshButton">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+        </section>
+
+        <!-- PRIMARY KPI CARDS -->
+        <section class="bess-kpis">
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>State of Charge (SoC)</span>
+                    <div class="kpi-icon cyan">
+                        <i class="fa-solid fa-battery-three-quarters"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="socValue">78</strong><span>%</span>
+                </div>
+                <div class="soc-progress">
+                    <div class="soc-progress-fill" id="socProgress"></div>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Available battery charge</span>
+                    <span class="kpi-tag">SOC</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>State of Health (SoH)</span>
+                    <div class="kpi-icon green">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="sohValue">96</strong><span>%</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Estimated battery health</span>
+                    <span class="kpi-tag">SOH</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Active Power</span>
+                    <div class="kpi-icon blue">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="powerValue">250</strong><span>kW</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Positive = discharge</span>
+                    <span class="kpi-tag" id="powerDirection">DISCHARGE</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Available Energy</span>
+                    <div class="kpi-icon purple">
+                        <i class="fa-solid fa-battery-full"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="energyValue">780</strong><span>kWh</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Estimated usable energy</span>
+                    <span class="kpi-tag">ENERGY</span>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- SECONDARY METRICS -->
+        <section class="secondary-kpis">
+            <div class="metric-box">
+                <i class="fa-solid fa-plug"></i>
+                <div>
+                    <span>DC Battery Voltage</span>
+                    <strong id="voltageValue">750 V</strong>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <i class="fa-solid fa-gauge-high"></i>
+                <div>
+                    <span>DC Battery Current</span>
+                    <strong id="currentValue">333.3 A</strong>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <i class="fa-solid fa-temperature-half"></i>
+                <div>
+                    <span>Battery Temperature</span>
+                    <strong id="temperatureValue">28.5 °C</strong>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <i class="fa-solid fa-clock"></i>
+                <div>
+                    <span>Estimated Runtime</span>
+                    <strong id="runtimeValue">3.12 hours</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- POWER CHART AND BATTERY STATUS -->
+        <section class="main-grid">
+
+            <article class="panel chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>BESS Power Trends</h3>
+                        <p>Charging, discharging and battery SoC</p>
+                    </div>
+                    <select id="periodSelect" aria-label="Select trend period">
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                </div>
+
+                <div class="chart-legend">
+                    <span><i class="legend-dot power-dot"></i> Active Power (kW)</span>
+                    <span><i class="legend-dot soc-dot"></i> State of Charge (%)</span>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="bessChart"></canvas>
+                </div>
+            </article>
+
+            <article class="panel battery-panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Battery System Status</h3>
+                        <p>System-level operating condition</p>
+                    </div>
+                    <i class="fa-solid fa-car-battery battery-header-icon"></i>
+                </div>
+
+                <div class="battery-visual">
+                    <div class="battery-outline">
+                        <div class="battery-fill" id="batteryFill"></div>
+                    </div>
+                    <div class="battery-percent">
+                        <strong id="batterySocLabel">78%</strong>
+                        <span>Battery SoC</span>
+                    </div>
+                </div>
+
+                <div class="battery-status-row">
+                    <span>Operating Mode</span>
+                    <strong id="statusMode">Discharging</strong>
+                </div>
+                <div class="battery-status-row">
+                    <span>BMS Communication</span>
+                    <strong class="good-text">Connected</strong>
+                </div>
+                <div class="battery-status-row">
+                    <span>Battery Temperature</span>
+                    <strong id="statusTemperature">28.5 °C</strong>
+                </div>
+                <div class="battery-status-row">
+                    <span>Active Alarms</span>
+                    <strong id="alarmCount">0</strong>
+                </div>
+
+                <div class="battery-footnote">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Monitoring display only. Control commands are not enabled.
+                </div>
+            </article>
+
+        </section>
+
+        <!-- BATTERY RACKS -->
+        <section class="panel rack-panel">
+            <div class="panel-header">
+                <div>
+                    <h3>Battery Rack Overview</h3>
+                    <p>Rack-level status, charge and temperature</p>
+                </div>
+                <span class="rack-count">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span id="rackCount">4 Racks</span>
+                </span>
+            </div>
+
+            <div class="rack-grid" id="rackGrid"></div>
+        </section>
+
+        <!-- CELL / RACK SENSOR TABLE -->
+        <section class="panel table-panel">
+            <div class="panel-header table-heading">
+                <div>
+                    <h3>BESS Data Table</h3>
+                    <p>Battery, rack and system measurements</p>
+                </div>
+
+                <div class="table-tools">
+                    <label class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="bessSearch"
+                               placeholder="Search BESS data..."
+                               aria-label="Search BESS data">
+                    </label>
+
+                    <button class="secondary-button" id="exportButton">
+                        <i class="fa-solid fa-download"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tag / ID</th>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                            <th>Equipment</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bessTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span id="tableCount">Showing 0 parameters</span>
+                <span><i class="fa-solid fa-circle-check"></i> Sample data</span>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Jove Multisystems Pvt. Ltd. | Solar EMS</span>
+            <span>BESS Monitoring Module</span>
+        </footer>
+
+    </main>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="bess_data.js"></script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Page layout */
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    position: relative;
+    background: #0f172a;
+}
+
+/* Background slider */
+.background-slider {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* Each background image */
+.slide {
+    position: absolute;
+    inset: 0;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    opacity: 0;
+    animation: imageSlider 9s infinite;
+}
+
+/* Image 1: Solar panels */
+.slide1 {
+    background-image: url("images/solar.jpg");
+    animation-delay: 0s;
+}
+
+/* Image 2: Wind turbines */
+.slide2 {
+    background-image: url("images/wind.jpg");
+    animation-delay: 3s;
+}
+
+/* Image 3: Battery storage */
+.slide3 {
+    background-image: url("images/battery.jpg");
+    animation-delay: 6s;
+}
+
+/* Dark overlay for readability */
+.background-slider::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 15, 35, 0.48);
+}
+
+/* Change image every 3 seconds */
+@keyframes imageSlider {
+    0% {
+        opacity: 0;
+    }
+
+    4% {
+        opacity: 1;
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    34% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Login card */
+.login-container {
+    position: relative;
+    z-index: 1;
+
+    width: 100%;
+    max-width: 440px;
+    padding: 35px;
+
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 14px;
+
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Company logo */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.company-logo {
+    width: 120px;
+    height: 80px;
+    object-fit: contain;
+}
+
+/* Heading */
+h1 {
+    text-align: center;
+    color: #12356b;
+    font-size: 25px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+/* Login subtitle */
+.login-container > p {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 22px;
+}
+
+/* Form labels */
+label {
+    display: block;
+    margin: 16px 0 7px;
+    color: #1e293b;
+    font-weight: bold;
+}
+
+/* Input fields */
+input {
+    width: 100%;
+    padding: 13px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+
+    font-size: 15px;
+    background: #ffffff;
+}
+
+input:focus {
+    outline: 2px solid #93c5fd;
+    border-color: #2563eb;
+}
+
+/* Login button */
+button {
+    width: 100%;
+    padding: 13px;
+    margin-top: 24px;
+
+    background: #2563eb;
+    color: white;
+
+    border: none;
+    border-radius: 6px;
+
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+/* Register link */
+.login-container .register-link {
+    margin: 22px 0 0;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile layout */
+@media (max-width: 480px) {
+    .login-container {
+        padding: 25px 20px;
+    }
+
+    h1 {
+        font-size: 21px;
+    }
+}

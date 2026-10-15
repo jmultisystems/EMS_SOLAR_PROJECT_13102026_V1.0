@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Plant Data | Solar EMS</title>
+
+    <link rel="stylesheet" href="plant_data.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="plant_data.js" defer></script>
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="dashboard.html">
+            <img src="jove_logo.png" alt="Jove Logo">
+            <div>
+                <strong>Jove Multisystems Pvt Ltd</strong>
+                <small>Clean Energy | Sustainable Future</small>
+            </div>
+        </a>
+
+        <nav class="navigation">
+            <a class="nav-item" href="dashboard.html">
+                <span class="nav-icon">⌂</span> Dashboard
+            </a>
+
+            <div class="nav-group open">
+                <button class="nav-item nav-toggle"
+                        aria-expanded="true">
+                    <span class="nav-icon">▥</span>
+                    <span>Main EMS Data</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a class="subnav-item active-sub"
+                       href="plant_data.html">Plant Datas</a>
+                    <a class="subnav-item"
+                       href="inverter_data.html">Inverter Datas</a>
+                    <a class="subnav-item"
+                       href="energy_meter_data.html">Energy Meter Datas</a>
+                    <a class="subnav-item"
+                       href="weather_data.html">Weather Datas</a>
+                    <a class="subnav-item"
+                       href="bess_data.html">BESS Datas</a>
+                    <a class="subnav-item"
+                       href="substation_data.html">Substation Datas</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle"
+                        aria-expanded="false">
+                    <span class="nav-icon">▦</span>
+                    <span>Basic Tabular View</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a class="subnav-item" href="#plantTable">
+                        Plant Data Table
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle"
+                        aria-expanded="false">
+                    <span class="nav-icon">⚙</span>
+                    <span>Plant Config</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a class="subnav-item" href="#plantDetails">
+                        Plant Details
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="solar-scene">
+                <div class="scene-sun"></div>
+                <div class="solar-panel panel-one"></div>
+                <div class="solar-panel panel-two"></div>
+                <div class="scene-hills"></div>
+            </div>
+
+            <div class="brand footer-brand">
+                <img src="jove_logo.png" alt="Jove Logo">
+                <div>
+                    <strong>Jove Multisystems Pvt Ltd</strong>
+                    <small>Solar Energy Solutions</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="top-header">
+            <button class="menu-button" id="menuButton"
+                    aria-label="Toggle sidebar">☰</button>
+
+            <select class="plant-select" id="plantSelect">
+                <option value="plant1">1. Solar Plant 1</option>
+                <option value="plant2">2. Solar Plant 2</option>
+                <option value="plant3">3. Solar Plant 3</option>
+            </select>
+
+            <div class="header-spacer"></div>
+
+            <div class="header-brand">
+                <img src="jove_logo.png" alt="Company Logo">
+                <strong>Jove Multisystems Pvt Ltd</strong>
+            </div>
+
+            <select class="language-select" aria-label="Language">
+                <option value="en">🌐 EN</option>
+                <option value="ta">தமிழ்</option>
+            </select>
+
+            <button class="profile-icon" title="User profile">♟</button>
+        </header>
+
+        <div class="page-content">
+
+            <section class="page-heading">
+                <div>
+                    <h1>☀ Plant Data Monitoring</h1>
+                    <p>Solar plant performance and energy monitoring</p>
+                </div>
+                <span class="live-pill">
+                    <i></i> PLANT ONLINE
+                </span>
+            </section>
+
+            <!-- Plant KPI cards -->
+            <section class="kpi-grid">
+
+                <article class="kpi-card blue">
+                    <span>Current Solar Power</span>
+                    <strong id="solarPower">3,950.417 kW</strong>
+                    <small>AC output power</small>
+                </article>
+
+                <article class="kpi-card green">
+                    <span>Today's Generation</span>
+                    <strong id="dayGeneration">5,879.750 kWh</strong>
+                    <small>Daily energy</small>
+                </article>
+
+                <article class="kpi-card purple">
+                    <span>Solar Irradiance</span>
+                    <strong id="irradiance">701.000 W/m²</strong>
+                    <small>Solar radiation</small>
+                </article>
+
+                <article class="kpi-card orange">
+                    <span>Performance Ratio</span>
+                    <strong id="performanceRatio">78.525%</strong>
+                    <small>Day PR</small>
+                </article>
+
+                <article class="kpi-card blue">
+                    <span>DC Capacity</span>
+                    <strong id="dcCapacity">7,084 kWp</strong>
+                    <small>Installed capacity</small>
+                </article>
+
+                <article class="kpi-card green">
+                    <span>AC Capacity</span>
+                    <strong id="acCapacity">7,000 kW</strong>
+                    <small>Installed capacity</small>
+                </article>
+
+                <article class="kpi-card orange">
+                    <span>Ambient Temperature</span>
+                    <strong id="ambientTemp">27.861 °C</strong>
+                    <small>Weather station</small>
+                </article>
+
+                <article class="kpi-card purple">
+                    <span>Module Temperature</span>
+                    <strong id="moduleTemp">31.780 °C</strong>
+                    <small>PV module</small>
+                </article>
+
+            </section>
+
+            <!-- Graph and general details -->
+            <section class="content-grid">
+
+                <article class="panel">
+                    <div class="panel-heading">
+                        <h2>▥ Plant Trend Analysis</h2>
+                        <span class="online-label">● Online</span>
+                    </div>
+
+                    <div class="chart-controls">
+                        <select id="metricSelect">
+                            <option value="power">Solar Power (kW)</option>
+                            <option value="irradiance">Irradiance (W/m²)</option>
+                            <option value="temperature">
+                                Module Temperature (°C)
+                            </option>
+                            <option value="generation">
+                                Energy Generation (kWh)
+                            </option>
+                        </select>
+
+                        <select id="periodSelect">
+                            <option value="today">Today</option>
+                            <option value="week">Week</option>
+                            <option value="month">Month</option>
+                        </select>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="plantChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="panel" id="plantDetails">
+                    <div class="panel-heading">
+                        <h2>▤ General Data</h2>
+                    </div>
+
+                    <div class="detail-row">
+                        <span>Plant Name</span>
+                        <strong id="plantName">Solar Plant 1</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Plant Status</span>
+                        <strong class="normal-text">Online</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Current Power</span>
+                        <strong id="detailPower">3,950.417 kW</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Yesterday Generation</span>
+                        <strong>30,704.750 kWh</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Month Generation</span>
+                        <strong id="monthGeneration">260,978 kWh</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Month PR</span>
+                        <strong>79.933%</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>CUF</span>
+                        <strong>3.500%</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Last Refresh</span>
+                        <strong id="lastLog">--</strong>
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- Tabular data -->
+            <section class="panel table-panel" id="plantTable">
+                <div class="panel-heading table-heading">
+                    <h2>▤ Plant Data Table</h2>
+                    <input type="search" id="tableSearch"
+                           placeholder="Search parameter...">
+                    <button class="export-button" id="exportButton">
+                        Export CSV
+                    </button>
+                </div>
+
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Updated At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="plantTableBody">
+                            <tr>
+                                <td>Solar Power</td>
+                                <td>3950.417</td>
+                                <td>kW</td>
+                                <td>Electrical</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Day Generation</td>
+                                <td>5879.750</td>
+                                <td>kWh</td>
+                                <td>Energy</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Month Generation</td>
+                                <td>260978.000</td>
+                                <td>kWh</td>
+                                <td>Energy</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>DC Capacity</td>
+                                <td>7084.000</td>
+                                <td>kWp</td>
+                                <td>Capacity</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>AC Capacity</td>
+                                <td>7000.000</td>
+                                <td>kW</td>
+                                <td>Capacity</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Irradiance</td>
+                                <td>701.000</td>
+                                <td>W/m²</td>
+                                <td>Weather</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Day Performance Ratio</td>
+                                <td>78.525</td>
+                                <td>%</td>
+                                <td>Performance</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Ambient Temperature</td>
+                                <td>27.861</td>
+                                <td>°C</td>
+                                <td>Weather</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>Module Temperature</td>
+                                <td>31.780</td>
+                                <td>°C</td>
+                                <td>Weather</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                            <tr>
+                                <td>CUF</td>
+                                <td>3.500</td>
+                                <td>%</td>
+                                <td>Performance</td>
+                                <td><span class="table-status">Normal</span></td>
+                                <td class="updated-time">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="refresh-note">
+                    Last refreshed: <span id="refreshTime">--</span>
+                </p>
+            </section>
+
+        </div>
+
+        <footer class="page-footer">
+            <span>© 2026 Energy Management System</span>
+            <span>Jove Multisystems Pvt Ltd | Plant Monitoring</span>
+        </footer>
+
+    </main>
+</div>
+
+</body>
+</html>

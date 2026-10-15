@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar EMS | Weather Data</title>
+
+    <link rel="stylesheet" href="weather_data.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <img src="jove_logo.png" alt="Jove Multisystems Logo">
+            <div>
+                <h2>JOVE EMS</h2>
+                <span>Energy Management</span>
+            </div>
+            <button class="close-sidebar" id="closeSidebar" aria-label="Close menu">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-label">MAIN MENU</div>
+
+        <nav class="navigation">
+            <a class="nav-link" href="dashboard.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-group">
+                <button class="nav-link nav-toggle" type="button">
+                    <i class="fa-solid fa-solar-panel"></i>
+                    <span>Plant Monitoring</span>
+                    <i class="fa-solid fa-chevron-down nav-arrow"></i>
+                </button>
+                <div class="submenu">
+                    <a href="plant_data.html">Plant Data</a>
+                    <a href="inverter_data.html">Inverter Data</a>
+                    <a href="energy_meter_data.html">Energy Meter Data</a>
+                    <a href="weather_data.html" class="active">Weather Data</a>
+                    <a href="bess_data.html">BESS Data</a>
+                    <a href="substation_data.html">Substation Data</a>
+                </div>
+            </div>
+
+            <a class="nav-link" href="alarm_data.html">
+                <i class="fa-solid fa-bell"></i>
+                <span>Alarms & Events</span>
+            </a>
+
+            <a class="nav-link" href="reports.html">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Reports</span>
+            </a>
+
+            <a class="nav-link" href="trends.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Trends</span>
+            </a>
+
+            <a class="nav-link" href="settings.html">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="connection-dot"></span>
+            <div>
+                <strong>EMS Interface</strong>
+                <small>Demo mode</small>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- HEADER -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="menu-button" id="menuButton" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <h1>Weather Data</h1>
+                    <p>Solar plant weather monitoring and environmental conditions</p>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <label class="plant-select-wrap">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <select id="plantSelect" aria-label="Select plant">
+                        <option value="Solar Plant 01">Solar Plant 01</option>
+                        <option value="Solar Plant 02">Solar Plant 02</option>
+                        <option value="Solar Plant 03">Solar Plant 03</option>
+                    </select>
+                </label>
+
+                <div class="header-date">
+                    <span id="currentDate">--</span>
+                    <strong id="currentTime">--:--:--</strong>
+                </div>
+
+                <button class="icon-button" id="notificationButton"
+                        title="Notifications" aria-label="Notifications">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+
+                <div class="user-profile">
+                    <img src="jove_logo.png" alt="Company">
+                    <div>
+                        <strong>Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE SUMMARY -->
+        <section class="page-summary">
+            <div class="summary-left">
+                <div class="weather-icon">
+                    <i class="fa-solid fa-cloud-sun"></i>
+                </div>
+                <div>
+                    <h2>Weather Station Overview</h2>
+                    <p>
+                        <span class="status-dot"></span>
+                        <span id="weatherStatus">Weather station online</span>
+                        <span class="summary-separator">|</span>
+                        Last updated: <span id="lastUpdated">--</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="summary-actions">
+                <select id="periodSelect" aria-label="Select trend period">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                </select>
+                <button class="primary-button" id="refreshButton">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+        </section>
+
+        <!-- WEATHER KPI CARDS -->
+        <section class="weather-kpis">
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Ambient Temperature</span>
+                    <div class="kpi-icon orange">
+                        <i class="fa-solid fa-temperature-half"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="temperatureValue">32.5</strong>
+                    <span>°C</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Current ambient temperature</span>
+                    <span class="mini-status">LIVE DEMO</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Solar Irradiance</span>
+                    <div class="kpi-icon yellow">
+                        <i class="fa-solid fa-sun"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="irradianceValue">785</strong>
+                    <span>W/m²</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Plane-of-array irradiance</span>
+                    <span class="kpi-tag">POA</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Relative Humidity</span>
+                    <div class="kpi-icon cyan">
+                        <i class="fa-solid fa-droplet"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="humidityValue">64</strong>
+                    <span>%</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Ambient relative humidity</span>
+                    <span class="kpi-tag">RH</span>
+                </div>
+            </article>
+
+            <article class="kpi-card">
+                <div class="kpi-top">
+                    <span>Wind Speed</span>
+                    <div class="kpi-icon purple">
+                        <i class="fa-solid fa-wind"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">
+                    <strong id="windSpeedValue">12.4</strong>
+                    <span>km/h</span>
+                </div>
+                <div class="kpi-bottom">
+                    <span class="kpi-note">Measured wind speed</span>
+                    <span class="kpi-tag">WIND</span>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- SECONDARY METRICS -->
+        <section class="secondary-kpis">
+            <div class="metric-box">
+                <i class="fa-solid fa-temperature-arrow-down"></i>
+                <div><span>Module Temperature</span><strong id="moduleTempValue">41.8 °C</strong></div>
+            </div>
+            <div class="metric-box">
+                <i class="fa-solid fa-compass"></i>
+                <div><span>Wind Direction</span><strong id="windDirectionValue">225° SW</strong></div>
+            </div>
+            <div class="metric-box">
+                <i class="fa-solid fa-cloud-rain"></i>
+                <div><span>Rainfall Today</span><strong id="rainfallValue">0.0 mm</strong></div>
+            </div>
+            <div class="metric-box">
+                <i class="fa-solid fa-gauge-high"></i>
+                <div><span>Atmospheric Pressure</span><strong id="pressureValue">1012 hPa</strong></div>
+            </div>
+        </section>
+
+        <!-- CHART + CURRENT CONDITIONS -->
+        <section class="main-grid">
+
+            <article class="panel chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Weather Trends</h3>
+                        <p>Environmental sensor history</p>
+                    </div>
+                    <select id="parameterSelect" aria-label="Select chart parameter">
+                        <option value="irradiance">Solar Irradiance</option>
+                        <option value="temperature">Ambient Temperature</option>
+                        <option value="humidity">Relative Humidity</option>
+                        <option value="windSpeed">Wind Speed</option>
+                        <option value="moduleTemp">Module Temperature</option>
+                    </select>
+                </div>
+                <div class="chart-legend" id="chartLegend">
+                    <span><i class="legend-dot"></i> Solar Irradiance (W/m²)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weatherChart"></canvas>
+                </div>
+            </article>
+
+            <article class="panel conditions-panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Current Conditions</h3>
+                        <p>Weather station measurements</p>
+                    </div>
+                    <i class="fa-solid fa-cloud-sun condition-header-icon"></i>
+                </div>
+
+                <div class="condition-main">
+                    <div class="condition-sun"><i class="fa-solid fa-sun"></i></div>
+                    <div>
+                        <strong id="conditionTemperature">32.5°C</strong>
+                        <span>Partly cloudy</span>
+                    </div>
+                </div>
+
+                <div class="condition-row">
+                    <span><i class="fa-solid fa-droplet"></i> Humidity</span>
+                    <strong id="conditionHumidity">64%</strong>
+                </div>
+                <div class="condition-row">
+                    <span><i class="fa-solid fa-wind"></i> Wind speed</span>
+                    <strong id="conditionWind">12.4 km/h</strong>
+                </div>
+                <div class="condition-row">
+                    <span><i class="fa-solid fa-sun"></i> Irradiance</span>
+                    <strong id="conditionIrradiance">785 W/m²</strong>
+                </div>
+                <div class="condition-row">
+                    <span><i class="fa-solid fa-temperature-half"></i> Module temp.</span>
+                    <strong id="conditionModuleTemp">41.8°C</strong>
+                </div>
+
+                <div class="condition-footnote">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Sample conditions for dashboard demonstration.
+                </div>
+            </article>
+
+        </section>
+
+        <!-- FORECAST -->
+        <section class="panel forecast-panel">
+            <div class="panel-header">
+                <div>
+                    <h3>24-Hour Forecast</h3>
+                    <p>Illustrative forecast display — not a live weather service</p>
+                </div>
+                <span class="forecast-badge"><i class="fa-regular fa-clock"></i> Next 24 hours</span>
+            </div>
+            <div class="forecast-grid" id="forecastGrid"></div>
+        </section>
+
+        <!-- SENSOR TABLE -->
+        <section class="panel table-panel">
+            <div class="panel-header table-heading">
+                <div>
+                    <h3>Weather Sensor Data</h3>
+                    <p>Sensor values and station status</p>
+                </div>
+                <div class="table-tools">
+                    <label class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="sensorSearch"
+                               placeholder="Search sensor..." aria-label="Search sensor data">
+                    </label>
+                    <button class="secondary-button" id="exportButton">
+                        <i class="fa-solid fa-download"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sensor ID</th>
+                            <th>Parameter</th>
+                            <th>Measured Value</th>
+                            <th>Unit</th>
+                            <th>Sensor Location</th>
+                            <th>Last Updated</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensorTableBody"></tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span id="tableCount">Showing 0 sensors</span>
+                <span><i class="fa-solid fa-circle-check"></i> Sample data</span>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>© 2026 Jove Multisystems Pvt. Ltd. | Solar EMS</span>
+            <span>Weather Monitoring Module</span>
+        </footer>
+
+    </main>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="weather_data.js"></script>
+</body>
+</html>

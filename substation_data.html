@@ -1,0 +1,489 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Substation Data | Solar EMS</title>
+
+    <link rel="stylesheet" href="substation_data.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <a class="brand" href="dashboard.html">
+            <img src="jove_logo.png" alt="Company Logo" class="company-logo">
+            <div>
+                <strong>Jove Multisystems Pvt Ltd</strong>
+                <small>Clean Energy | Sustainable Future</small>
+            </div>
+        </a>
+
+        <nav class="navigation">
+
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-group open">
+                <button class="nav-item nav-toggle" aria-expanded="true">
+                    <span class="nav-icon">▥</span>
+                    <span>Main EMS Data</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a href="plant_data.html" class="subnav-item">Plant Datas</a>
+                    <a href="inverter_data.html" class="subnav-item">Inverter Datas</a>
+                    <a href="energy_meter_data.html" class="subnav-item">Energy Meter Datas</a>
+                    <a href="weather_data.html" class="subnav-item">Weather Datas</a>
+                    <a href="bess_data.html" class="subnav-item">BESS Datas</a>
+                    <a href="substation_data.html" class="subnav-item active-sub">Substation Datas</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle" aria-expanded="false">
+                    <span class="nav-icon">▦</span>
+                    <span>Basic Tabular View</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a href="plant_data.html#tableView" class="subnav-item">Plant Data Table</a>
+                    <a href="inverter_data.html#tableView" class="subnav-item">Inverter Data Table</a>
+                    <a href="energy_meter_data.html#tableView" class="subnav-item">Energymeter Data Table</a>
+                    <a href="weather_data.html#tableView" class="subnav-item">Weather Data Table</a>
+                    <a href="bess_data.html#tableView" class="subnav-item">BESS Data Table</a>
+                    <a href="substation_data.html#tableView" class="subnav-item">Substation Data Table</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle" aria-expanded="false">
+                    <span class="nav-icon">⚙</span>
+                    <span>Plant Config</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a href="dashboard.html#general-data" class="subnav-item">Plant Details</a>
+                    <a href="dashboard.html#general-data" class="subnav-item">Device Settings</a>
+                </div>
+            </div>
+
+        </nav>
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-bottom">
+
+            <div class="solar-scene">
+                <div class="scene-sun"></div>
+                <div class="solar-panel panel-one"></div>
+                <div class="solar-panel panel-two"></div>
+                <div class="scene-hills"></div>
+            </div>
+
+            <a class="brand footer-brand" href="dashboard.html">
+                <img src="jove_logo.png" alt="Company Logo" class="company-logo">
+                <div>
+                    <strong>Jove Multisystems Pvt Ltd</strong>
+                    <small>Solar Energy Solutions</small>
+                </div>
+            </a>
+
+            <div class="sidebar-footer">
+                <button type="button" title="Cloud connection">♧</button>
+                <button type="button" title="Call support">☎</button>
+                <button type="button" title="Information">ⓘ</button>
+                <button type="button" title="Help">▣</button>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- MOBILE OVERLAY -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- HEADER -->
+        <header class="top-header">
+
+            <button class="menu-button" id="menuButton" aria-label="Toggle sidebar">
+                ☰
+            </button>
+
+            <select class="plant-select" id="plantSelect" aria-label="Select plant">
+                <option value="plant1">▦ &nbsp;1. Solar Plant 1</option>
+                <option value="plant2">▦ &nbsp;2. Solar Plant 2</option>
+                <option value="plant3">▦ &nbsp;3. Solar Plant 3</option>
+            </select>
+
+            <div class="header-spacer"></div>
+
+            <div class="header-brand">
+                <img src="jove_logo.png" alt="Company Logo" class="header-logo">
+                <strong>Jove Multisystems Pvt Ltd</strong>
+            </div>
+
+            <select class="language-select" id="languageSelect" aria-label="Language">
+                <option value="en">🌐 &nbsp; EN</option>
+                <option value="ta">தமிழ்</option>
+            </select>
+
+            <button class="profile-icon" type="button" title="User profile">♟</button>
+
+        </header>
+
+        <!-- SUMMARY BAR -->
+        <section class="summary-bar">
+
+            <div class="summary-item">
+                <div class="summary-icon blue-icon">◷</div>
+                <div>
+                    <span>Last Log Time <small>(Auto refresh)</small></span>
+                    <strong id="lastLog">--</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon green-icon">ϟ</div>
+                <div>
+                    <span>Active Power</span>
+                    <strong id="activePower">4.820 MW</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon amber-icon">↗</div>
+                <div>
+                    <span>Grid Frequency</span>
+                    <strong id="gridFrequency">50.02 Hz</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon purple-icon">▥</div>
+                <div>
+                    <span>Transformer Load</span>
+                    <strong id="transformerLoad">68.0 %</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon cyan-icon">ϟ</div>
+                <div>
+                    <span>Busbar Voltage</span>
+                    <strong id="busbarVoltage">33.00 kV</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon blue-icon">◉</div>
+                <div>
+                    <span>Power Factor</span>
+                    <strong id="powerFactor">0.98</strong>
+                </div>
+            </div>
+
+            <div class="total-generation">
+                <div class="summary-icon green-icon">ϟ</div>
+                <div>
+                    <span>Substation Status</span>
+                    <strong id="substationStatus">Online</strong>
+                </div>
+                <div class="solar-art">▱ ▱ ▱ <span>☀</span></div>
+            </div>
+
+        </section>
+
+        <!-- DASHBOARD BODY -->
+        <div class="dashboard-body">
+
+            <section class="plant-section">
+
+                <div class="section-title">
+                    <span class="leaf">❧</span>
+                    Substation
+                    <span class="live-pill"><i></i> LIVE</span>
+                </div>
+
+                <div class="view-tabs">
+                    <button class="tab active" data-view="panelView">▦ &nbsp;Panel</button>
+                    <button class="tab" data-view="tableView">▤ &nbsp;Table</button>
+                </div>
+
+                <!-- KPI CARDS -->
+                <section class="kpi-grid" id="kpiGrid">
+
+                    <article class="kpi-card kpi-purple">
+                        <div class="kpi-top">
+                            <span class="kpi-icon">ϟ</span>
+                            <span class="faint-icon">▥</span>
+                        </div>
+                        <div class="metric-pair">
+                            <div>
+                                <strong id="hvVoltage">33.00</strong>
+                                <span>HV Voltage (kV)</span>
+                            </div>
+                            <div>
+                                <strong id="lvVoltage">0.433</strong>
+                                <span>LV Voltage (kV)</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="kpi-card kpi-green">
+                        <div class="kpi-top">
+                            <span class="kpi-icon">↗</span>
+                            <span class="faint-icon">ϟ</span>
+                        </div>
+                        <div class="metric-pair">
+                            <div>
+                                <strong id="hvCurrent">84.4</strong>
+                                <span>HV Current (A)</span>
+                            </div>
+                            <div>
+                                <strong id="lvCurrent">6420</strong>
+                                <span>LV Current (A)</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="kpi-card kpi-orange">
+                        <div class="kpi-top">
+                            <span class="kpi-icon">♨</span>
+                            <span class="faint-icon">☼</span>
+                        </div>
+                        <div class="metric-pair">
+                            <div>
+                                <strong id="oilTemp">48.2</strong>
+                                <span>Oil Temp (°C)</span>
+                            </div>
+                            <div>
+                                <strong id="windingTemp">62.5</strong>
+                                <span>Winding Temp (°C)</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="kpi-card kpi-blue">
+                        <div class="kpi-top">
+                            <span class="kpi-icon">▤</span>
+                            <span class="faint-icon">◉</span>
+                        </div>
+                        <div class="metric-pair">
+                            <div>
+                                <strong id="activePowerCard">4.82</strong>
+                                <span>Active Power (MW)</span>
+                            </div>
+                            <div>
+                                <strong id="reactivePower">0.72</strong>
+                                <span>Reactive Power (MVAr)</span>
+                            </div>
+                        </div>
+                    </article>
+
+                </section>
+
+                <!-- PANEL VIEW -->
+                <section class="content-grid" id="panelView">
+
+                    <!-- CHART -->
+                    <article class="panel graph-panel">
+                        <div class="panel-heading">
+                            <h2>▥ &nbsp;Substation Electrical Trend</h2>
+                            <span class="status-dot">● Online</span>
+                        </div>
+
+                        <div class="chart-controls">
+                            <label for="graphMetric">Select Options</label>
+                            <select id="graphMetric">
+                                <option value="voltage">Busbar Voltage (kV)</option>
+                                <option value="frequency">Grid Frequency (Hz)</option>
+                                <option value="power">Active Power (MW)</option>
+                                <option value="temperature">Transformer Temperature (°C)</option>
+                            </select>
+
+                            <div class="range-buttons">
+                                <button class="range active" data-range="today">Today</button>
+                                <button class="range" data-range="week">Week</button>
+                                <button class="range" data-range="month">Month</button>
+                                <button class="range" data-range="year">Year</button>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <canvas id="substationChart"></canvas>
+                        </div>
+                    </article>
+
+                    <!-- GENERAL DATA -->
+                    <article class="panel general-panel" id="general-data">
+                        <div class="panel-heading">
+                            <h2>▤ &nbsp;Transformer General Data</h2>
+                            <span class="more-button">•••</span>
+                        </div>
+
+                        <div class="general-grid">
+
+                            <div class="data-card">
+                                <div class="data-title">
+                                    <span class="data-icon">ϟ</span>
+                                    <b>Transformer</b>
+                                </div>
+                                <div class="data-row">
+                                    <span>Equipment</span>
+                                    <strong>Transformer T1</strong>
+                                </div>
+                                <div class="data-row">
+                                    <span>Rated Capacity</span>
+                                    <strong>7.5 MVA</strong>
+                                </div>
+                            </div>
+
+                            <div class="data-card">
+                                <div class="data-title">
+                                    <span class="data-icon">◉</span>
+                                    <b>Electrical</b>
+                                </div>
+                                <div class="data-row">
+                                    <span>HV Side</span>
+                                    <strong>33 kV</strong>
+                                </div>
+                                <div class="data-row">
+                                    <span>LV Side</span>
+                                    <strong>433 V</strong>
+                                </div>
+                            </div>
+
+                            <div class="data-card">
+                                <div class="data-title">
+                                    <span class="data-icon">▥</span>
+                                    <b>Loading</b>
+                                </div>
+                                <div class="data-row">
+                                    <span>Load</span>
+                                    <strong id="generalLoad">68 %</strong>
+                                </div>
+                                <div class="load-track">
+                                    <div class="load-fill" id="loadFill"></div>
+                                </div>
+                            </div>
+
+                            <div class="data-card">
+                                <div class="data-title">
+                                    <span class="data-icon">♨</span>
+                                    <b>Temperature</b>
+                                </div>
+                                <div class="data-row">
+                                    <span>Oil</span>
+                                    <strong id="generalOilTemp">48.2 °C</strong>
+                                </div>
+                                <div class="data-row">
+                                    <span>Winding</span>
+                                    <strong id="generalWindingTemp">62.5 °C</strong>
+                                </div>
+                            </div>
+
+                        </div>
+                    </article>
+
+                </section>
+
+                <!-- BREAKER STATUS -->
+                <section class="panel breaker-panel" id="breakerPanel">
+                    <div class="panel-heading">
+                        <h2>▤ &nbsp;Circuit Breaker Status</h2>
+                        <span class="status-dot">● Demo Status</span>
+                    </div>
+
+                    <div class="breaker-grid">
+
+                        <div class="breaker-card">
+                            <div class="breaker-icon closed-icon">ϟ</div>
+                            <div class="breaker-info">
+                                <strong>Incoming Breaker</strong>
+                                <span>CB-01 / 33 kV</span>
+                            </div>
+                            <span class="breaker-badge closed">Closed</span>
+                        </div>
+
+                        <div class="breaker-card">
+                            <div class="breaker-icon closed-icon">ϟ</div>
+                            <div class="breaker-info">
+                                <strong>Transformer Breaker</strong>
+                                <span>CB-02 / T1</span>
+                            </div>
+                            <span class="breaker-badge closed">Closed</span>
+                        </div>
+
+                        <div class="breaker-card">
+                            <div class="breaker-icon closed-icon">ϟ</div>
+                            <div class="breaker-info">
+                                <strong>Outgoing Feeder 1</strong>
+                                <span>CB-03 / FDR-01</span>
+                            </div>
+                            <span class="breaker-badge closed">Closed</span>
+                        </div>
+
+                        <div class="breaker-card">
+                            <div class="breaker-icon open-icon">ϟ</div>
+                            <div class="breaker-info">
+                                <strong>Outgoing Feeder 2</strong>
+                                <span>CB-04 / FDR-02</span>
+                            </div>
+                            <span class="breaker-badge open">Open</span>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TABLE VIEW -->
+                <section class="panel table-panel" id="tableView" hidden>
+                    <div class="panel-heading">
+                        <h2>▤ &nbsp;Substation Data Table</h2>
+                        <div class="table-actions">
+                            <input type="search" id="tableSearch" placeholder="Search data...">
+                            <button class="export-button" id="exportButton">↓ Export CSV</button>
+                        </div>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table id="substationTable">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Value</th>
+                                    <th>Unit</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="substationTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </section>
+
+            <footer class="page-footer">
+                <span>© 2026 Jove Multisystems Pvt Ltd</span>
+                <span>Solar Energy Management System | Substation Monitoring</span>
+            </footer>
+
+        </div>
+    </main>
+</div>
+
+<script src="substation_data.js"></script>
+</body>
+</html>

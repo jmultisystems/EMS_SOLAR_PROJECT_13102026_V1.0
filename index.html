@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EMS for Solar - Login</title>
+
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+    <!-- Background image slider -->
+    <div class="background-slider">
+        <div class="slide slide1"></div>
+        <div class="slide slide2"></div>
+        <div class="slide slide3"></div>
+    </div>
+
+    <!-- Login form -->
+    <div class="login-container">
+
+<div class="logo-container">
+    <img src="jove_logo.png"
+         alt="Company Logo"
+         class="company-logo">
+</div>
+
+<h1>ENERGY MANAGEMENT SYSTEM</h1>
+
+        <p>Login</p>
+
+        <form action="/login" method="POST">
+
+            <label for="email">Email Address</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+            >
+
+            <button type="submit">Login</button>
+
+        </form>
+
+        <p class="register-link">
+            Don't have an account?
+            <a href="register.html">Create New Account</a>
+        </p>
+
+    </div>
+
+</body>
+</html>
