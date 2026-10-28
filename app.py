@@ -16,25 +16,51 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import URL
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+# Load .env locally. Vercel uses configured environment variables.
 load_dotenv()
 
 app = Flask(__name__)
 
-# Configure Aiven MySQL connection with TLS certificate verification.
+# --------------------------------------------------
+# 1. Environment configuration
+# --------------------------------------------------
+
 required_vars = [
-    "SECRET_KEY", "JWT_SECRET_KEY", "DB_HOST", "DB_PORT",
-    "DB_NAME", "DB_USER", "DB_PASSWORD", "DB_SSL_CA",
+    "SECRET_KEY",
+    "JWT_SECRET_KEY",
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PASSWORD",
+    "DB_SSL_CA",
     "FRONTEND_ORIGIN",
 ]
+
 missing = [key for key in required_vars if not os.getenv(key)]
 if missing:
-    raise RuntimeError("Missing environment variables: " + ", ".join(missing))
+    raise RuntimeError(
+        "Missing environment variables: " + ", ".join(missing)
+    )
 
+# Resolve the Aiven CA certificate path.
 ssl_ca = os.environ["DB_SSL_CA"]
+
+if not os.path.isabs(ssl_ca):
+    ssl_ca = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        ssl_ca,
+    )
+
 if not os.path.isfile(ssl_ca):
-    raise RuntimeError("DB_SSL_CA must point to your downloaded Aiven CA certificate.")
+    raise RuntimeError("Aiven CA certificate file not found.")
+
+# --------------------------------------------------
+# 2. Database configuration: Aiven MySQL
+# --------------------------------------------------
 
 database_url = URL.create(
     "mysql+pymysql",
@@ -50,7 +76,12 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI=database_url,
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     SQLALCHEMY_ENGINE_OPTIONS={
-        "connect_args": {"ssl": {"ca": ssl_ca}}
+        "pool_pre_ping": True,
+        "connect_args": {
+            "ssl": {
+                "ca": ssl_ca,
+            }
+        },
     },
     JWT_SECRET_KEY=os.environ["JWT_SECRET_KEY"],
     JWT_ACCESS_TOKEN_EXPIRES=timedelta(minutes=30),
@@ -59,35 +90,66 @@ app.config.update(
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
+# --------------------------------------------------
+# 3. CORS configuration
+# --------------------------------------------------
+
+frontend_origin = os.environ["FRONTEND_ORIGIN"].rstrip("/")
+
 CORS(
     app,
-    resources={r"/api/*": {"origins": os.environ["FRONTEND_ORIGIN"]}},
+    resources={
+        r"/api/*": {
+            "origins": [frontend_origin],
+        }
+    },
 )
 
+# --------------------------------------------------
+# 4. Rate limiting
+# --------------------------------------------------
+
 limiter = Limiter(
-    get_remote_address,
+    key_func=get_remote_address,
     app=app,
     default_limits=[],
     storage_uri="memory://",
 )
 
+# --------------------------------------------------
+# 5. User database model
+# --------------------------------------------------
 
 class User(db.Model):
     __tablename__ = "users"
 
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    id = db.Column(
+        db.BigInteger,
+        primary_key=True,
+        autoincrement=True,
+    )
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+
     role = db.Column(
         db.Enum("admin", "operator", "viewer"),
         nullable=False,
         default="operator",
     )
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
-    created_at = db.Column(
-        db.DateTime, nullable=False, server_default=db.func.current_timestamp()
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
     )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.current_timestamp(),
+    )
+
     updated_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -96,10 +158,21 @@ class User(db.Model):
     )
 
 
+# --------------------------------------------------
+# 6. API health check
+# --------------------------------------------------
+
 @app.get("/api/health")
 def health():
-    return jsonify({"status": "ok", "service": "Jove EMS API"}), 200
+    return jsonify({
+        "status": "ok",
+        "service": "Jove EMS API",
+    }), 200
 
+
+# --------------------------------------------------
+# 7. User registration
+# --------------------------------------------------
 
 @app.post("/api/register")
 @limiter.limit("5 per minute")
@@ -111,35 +184,70 @@ def register():
     password = data.get("password", "")
 
     if not full_name or len(full_name) > 100:
-        return jsonify({"error": "Enter a valid full name."}), 400
+        return jsonify({
+            "error": "Enter a valid full name."
+        }), 400
 
-    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-        return jsonify({"error": "Enter a valid email address."}), 400
+    # Basic email format validation.
+    if (
+        len(email) > 255
+        or not re.fullmatch(
+            r"[^@\s]+@[^@\s]+\.[^@\s]+",
+            email,
+        )
+    ):
+        return jsonify({
+            "error": "Enter a valid email address."
+        }), 400
 
     if not isinstance(password, str) or len(password) < 12:
-        return jsonify({"error": "Password must be at least 12 characters."}), 400
+        return jsonify({
+            "error": "Password must be at least 12 characters."
+        }), 400
 
     if len(password) > 128:
-        return jsonify({"error": "Password is too long."}), 400
+        return jsonify({
+            "error": "Password is too long."
+        }), 400
 
     if User.query.filter_by(email=email).first():
-        return jsonify({"error": "An account with this email already exists."}), 409
+        return jsonify({
+            "error": "An account with this email already exists."
+        }), 409
 
     user = User(
         full_name=full_name,
         email=email,
         password_hash=generate_password_hash(password),
-        role="operator",  # Never accept a role from public registration.
+        role="operator",
         is_active=True,
     )
 
-    db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except IntegrityError:
+        # Also handles simultaneous registration attempts
+        # for the same email address.
+        db.session.rollback()
+        return jsonify({
+            "error": "An account with this email already exists."
+        }), 409
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("User registration failed.")
+        return jsonify({
+            "error": "Unable to create the account. Please try again."
+        }), 500
 
     return jsonify({
         "message": "Account created successfully. Please log in."
     }), 201
 
+
+# --------------------------------------------------
+# 8. User login
+# --------------------------------------------------
 
 @app.post("/api/login")
 @limiter.limit("5 per minute")
@@ -149,15 +257,21 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = data.get("password", "")
 
+    if not isinstance(password, str) or not email:
+        return jsonify({
+            "error": "Invalid email or password."
+        }), 401
+
     user = User.query.filter_by(email=email).first()
 
     if (
         not user
-        or not isinstance(password, str)
         or not check_password_hash(user.password_hash, password)
         or not user.is_active
     ):
-        return jsonify({"error": "Invalid email or password."}), 401
+        return jsonify({
+            "error": "Invalid email or password."
+        }), 401
 
     token = create_access_token(identity=str(user.id))
 
@@ -173,14 +287,26 @@ def login():
     }), 200
 
 
+# --------------------------------------------------
+# 9. Get currently authenticated user
+# --------------------------------------------------
+
 @app.get("/api/me")
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
-    user = db.session.get(User, int(user_id))
+
+    try:
+        user = db.session.get(User, int(user_id))
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Invalid authentication token."
+        }), 401
 
     if not user or not user.is_active:
-        return jsonify({"error": "Account unavailable."}), 401
+        return jsonify({
+            "error": "Account unavailable."
+        }), 401
 
     return jsonify({
         "id": user.id,
@@ -190,6 +316,13 @@ def me():
     }), 200
 
 
+# --------------------------------------------------
+# 10. Local development entry point
+# --------------------------------------------------
+
 if __name__ == "__main__":
-    # Local development only. Use a production WSGI server when deployed.
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+    )
