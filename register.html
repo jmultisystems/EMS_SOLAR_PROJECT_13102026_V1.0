@@ -8,35 +8,35 @@
     <link rel="stylesheet" href="register.css">
 </head>
 <body>
-
     <div class="register-container">
         <h1>Create New Account</h1>
         <p>Register to access the IoT monitoring system</p>
 
-        <form action="/register" method="POST">
-            <label>Full Name</label>
-            <input type="text" name="full_name"
+        <form id="registerForm">
+            <label for="full_name">Full Name</label>
+            <input type="text" id="full_name" name="full_name"
                    placeholder="Enter your full name" required>
 
-            <label>Email Address</label>
-            <input type="email" name="email"
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email"
                    placeholder="Enter your email" required>
 
-            <label>Company Name</label>
-            <input type="text" name="company"
+            <label for="company">Company Name</label>
+            <input type="text" id="company" name="company"
                    placeholder="Enter company name">
 
-            <label>Password</label>
-            <input type="password" name="password"
-                   placeholder="Create password"
-                   minlength="8" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   placeholder="Create password" minlength="8" required>
 
-            <label>Confirm Password</label>
-            <input type="password" name="confirm_password"
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password"
+                   name="confirm_password"
                    placeholder="Confirm password"
                    minlength="8" required>
 
-            <button type="submit">Register</button>
+            <button type="submit" id="registerButton">Register</button>
+            <p id="message" role="status" aria-live="polite"></p>
         </form>
 
         <p class="login-link">
@@ -45,5 +45,6 @@
         </p>
     </div>
 
+    <script src="register.js"></script>
 </body>
 </html>
