@@ -40,34 +40,63 @@ required_vars = [
     "FRONTEND_ORIGIN",
 ]
 
-missing = [key for key in required_vars if not os.getenv(key)]
+missing = [
+    key for key in required_vars
+    if not os.getenv(key, "").strip()
+]
+
 if missing:
     raise RuntimeError(
         "Missing environment variables: " + ", ".join(missing)
     )
 
-# Resolve the Aiven CA certificate path.
-ssl_ca = os.environ["DB_SSL_CA"]
+# --------------------------------------------------
+# 2. Resolve Aiven MySQL SSL certificate
+# DB_SSL_CA may contain a file path or PEM certificate
+# --------------------------------------------------
 
-if not os.path.isabs(ssl_ca):
-    ssl_ca = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        ssl_ca,
-    )
+ssl_ca_value = os.environ["DB_SSL_CA"].strip()
+
+# Support certificate contents stored directly in Vercel.
+if "-----BEGIN CERTIFICATE-----" in ssl_ca_value:
+    ssl_ca_value = ssl_ca_value.replace("\\n", "\n")
+
+    ssl_ca = "/tmp/jove_ems_aiven_ca.pem"
+
+    with open(ssl_ca, "w", encoding="utf-8") as cert_file:
+        cert_file.write(ssl_ca_value)
+
+else:
+    # Support a path to a certificate file.
+    if os.path.isabs(ssl_ca_value):
+        ssl_ca = ssl_ca_value
+    else:
+        ssl_ca = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            ssl_ca_value,
+        )
 
 if not os.path.isfile(ssl_ca):
-    raise RuntimeError("Aiven CA certificate file not found.")
+    raise RuntimeError(
+        "Aiven CA certificate not found. "
+        "Check the DB_SSL_CA environment variable."
+    )
 
 # --------------------------------------------------
-# 2. Database configuration: Aiven MySQL
+# 3. Database configuration: Aiven MySQL
 # --------------------------------------------------
+
+try:
+    database_port = int(os.environ["DB_PORT"])
+except ValueError as exc:
+    raise RuntimeError("DB_PORT must be a valid port number.") from exc
 
 database_url = URL.create(
     "mysql+pymysql",
     username=os.environ["DB_USER"],
     password=os.environ["DB_PASSWORD"],
     host=os.environ["DB_HOST"],
-    port=int(os.environ["DB_PORT"]),
+    port=database_port,
     database=os.environ["DB_NAME"],
 )
 
@@ -91,7 +120,7 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 # --------------------------------------------------
-# 3. CORS configuration
+# 4. CORS configuration
 # --------------------------------------------------
 
 frontend_origin = os.environ["FRONTEND_ORIGIN"].rstrip("/")
@@ -106,7 +135,7 @@ CORS(
 )
 
 # --------------------------------------------------
-# 4. Rate limiting
+# 5. Rate limiting
 # --------------------------------------------------
 
 limiter = Limiter(
@@ -117,7 +146,7 @@ limiter = Limiter(
 )
 
 # --------------------------------------------------
-# 5. User database model
+# 6. User database model
 # --------------------------------------------------
 
 class User(db.Model):
@@ -128,6 +157,7 @@ class User(db.Model):
         primary_key=True,
         autoincrement=True,
     )
+
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -159,8 +189,17 @@ class User(db.Model):
 
 
 # --------------------------------------------------
-# 6. API health check
+# 7. API health check
 # --------------------------------------------------
+
+@app.get("/")
+def index():
+    return jsonify({
+        "service": "Jove EMS API",
+        "status": "running",
+        "health_endpoint": "/api/health",
+    }), 200
+
 
 @app.get("/api/health")
 def health():
@@ -171,7 +210,7 @@ def health():
 
 
 # --------------------------------------------------
-# 7. User registration
+# 8. User registration
 # --------------------------------------------------
 
 @app.post("/api/register")
@@ -226,13 +265,13 @@ def register():
     try:
         db.session.add(user)
         db.session.commit()
+
     except IntegrityError:
-        # Also handles simultaneous registration attempts
-        # for the same email address.
         db.session.rollback()
         return jsonify({
             "error": "An account with this email already exists."
         }), 409
+
     except Exception:
         db.session.rollback()
         app.logger.exception("User registration failed.")
@@ -246,7 +285,7 @@ def register():
 
 
 # --------------------------------------------------
-# 8. User login
+# 9. User login
 # --------------------------------------------------
 
 @app.post("/api/login")
@@ -288,7 +327,7 @@ def login():
 
 
 # --------------------------------------------------
-# 9. Get currently authenticated user
+# 10. Get currently authenticated user
 # --------------------------------------------------
 
 @app.get("/api/me")
@@ -317,7 +356,7 @@ def me():
 
 
 # --------------------------------------------------
-# 10. Local development entry point
+# 11. Local development entry point
 # --------------------------------------------------
 
 if __name__ == "__main__":
