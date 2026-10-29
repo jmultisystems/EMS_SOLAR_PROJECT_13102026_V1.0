@@ -1,0 +1,245 @@
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1e293b;
+    background: #ecfdf5;
+    font-synthesis: none;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 16px;
+
+    background:
+        radial-gradient(circle at top left, #d1fae5 0, transparent 45%),
+        linear-gradient(135deg, #064e3b, #047857 55%, #10b981);
+}
+
+.register-container {
+    width: 100%;
+    max-width: 460px;
+    padding: 32px;
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 18px;
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
+}
+
+.brand {
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.brand-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 10px;
+    border-radius: 14px;
+    background: #059669;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.brand-name {
+    margin: 0;
+    color: #064e3b;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.brand-subtitle {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.page-heading {
+    margin-bottom: 22px;
+    text-align: center;
+}
+
+.page-heading h1 {
+    margin: 0 0 10px;
+    color: #064e3b;
+    font-size: 27px;
+    line-height: 1.25;
+}
+
+.page-heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.form-group {
+    margin-bottom: 17px;
+}
+
+label {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.optional {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 12px 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input::placeholder {
+    color: #94a3b8;
+}
+
+input:focus {
+    outline: none;
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+input:focus:invalid {
+    border-color: #dc2626;
+}
+
+#passwordHint {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 8px;
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #059669;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+button:hover:not(:disabled) {
+    background: #047857;
+    transform: translateY(-1px);
+}
+
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid #6ee7b7;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.message {
+    margin: 12px 0;
+    padding: 11px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.message.success {
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+}
+
+.message.error {
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+}
+
+.login-link {
+    margin: 23px 0 0;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+a {
+    color: #047857;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    color: #94a3b8;
+    font-size: 11px;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 18px 12px;
+    }
+
+    .register-container {
+        padding: 24px 20px;
+        border-radius: 14px;
+    }
+
+    .page-heading h1 {
+        font-size: 24px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}

@@ -4,47 +4,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create New Account</title>
-    <link rel="stylesheet" href="register.css">
+
+    <meta name="theme-color" content="#064e3b">
+    <title>Create Account | Jove EMS</title>
+
+    <link rel="stylesheet" href="/css/register.css">
+    <script src="/js/register.js" defer></script>
 </head>
+
 <body>
-    <div class="register-container">
-        <h1>Create New Account</h1>
-        <p>Register to access the IoT monitoring system</p>
+    <main class="register-container">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">J</div>
+            <p class="brand-name">JOVE MULTISYSTEMS</p>
+            <p class="brand-subtitle">Energy Management System</p>
+        </div>
+
+        <header class="page-heading">
+            <h1>Create Your Account</h1>
+            <p>Register to access the Jove EMS platform.</p>
+        </header>
 
         <form id="registerForm">
-            <label for="full_name">Full Name</label>
-            <input type="text" id="full_name" name="full_name"
-                   placeholder="Enter your full name" required>
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    placeholder="Enter your full name"
+                    autocomplete="name"
+                    maxlength="100"
+                    required
+                >
+            </div>
 
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email"
-                   placeholder="Enter your email" required>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    autocomplete="email"
+                    maxlength="255"
+                    required
+                >
+            </div>
 
-            <label for="company">Company Name</label>
-            <input type="text" id="company" name="company"
-                   placeholder="Enter company name">
+            <div class="form-group">
+                <label for="company">Company Name <span class="optional">(Optional)</span></label>
+                <input
+                    type="text"
+                    id="company"
+                    name="company"
+                    placeholder="Enter your company name"
+                    autocomplete="organization"
+                    maxlength="150"
+                >
+            </div>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password"
-                   placeholder="Create password" minlength="8" required>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Minimum 12 characters"
+                    autocomplete="new-password"
+                    minlength="12"
+                    maxlength="128"
+                    aria-describedby="passwordHint"
+                    required
+                >
+                <small id="passwordHint">
+                    Use at least 12 characters.
+                </small>
+            </div>
 
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password"
-                   name="confirm_password"
-                   placeholder="Confirm password"
-                   minlength="8" required>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    placeholder="Re-enter your password"
+                    autocomplete="new-password"
+                    minlength="12"
+                    maxlength="128"
+                    required
+                >
+            </div>
 
-            <button type="submit" id="registerButton">Register</button>
-            <p id="message" role="status" aria-live="polite"></p>
+            <div id="message" class="message" role="status"
+                 aria-live="polite" hidden></div>
+
+            <button type="submit" id="registerButton">
+                Create Account
+            </button>
         </form>
 
         <p class="login-link">
             Already have an account?
-            <a href="index.html">Back to Login</a>
+            <a href="/login">Sign in</a>
         </p>
-    </div>
 
-    <script src="register.js"></script>
+        <footer class="footer">
+            Clean Energy | Sustainable Future
+        </footer>
+    </main>
 </body>
 </html>

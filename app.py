@@ -2,6 +2,7 @@
 import os
 import re
 from datetime import timedelta
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
@@ -15,12 +16,13 @@ from flask_jwt_extended import (
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import URL
+from sqlalchemy import URL, text
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-# Load .env locally. Vercel uses configured environment variables.
 load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent
 
 app = Flask(__name__)
 
@@ -50,40 +52,38 @@ if missing:
         "Missing environment variables: " + ", ".join(missing)
     )
 
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["JWT_SECRET_KEY"] = os.environ["JWT_SECRET_KEY"]
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
+
 # --------------------------------------------------
-# 2. Resolve Aiven MySQL SSL certificate
-# DB_SSL_CA may contain a file path or PEM certificate
+# 2. Aiven MySQL SSL certificate
+# DB_SSL_CA can contain PEM contents or a file path.
 # --------------------------------------------------
 
 ssl_ca_value = os.environ["DB_SSL_CA"].strip()
 
-# Support certificate contents stored directly in Vercel.
 if "-----BEGIN CERTIFICATE-----" in ssl_ca_value:
     ssl_ca_value = ssl_ca_value.replace("\\n", "\n")
-
     ssl_ca = "/tmp/jove_ems_aiven_ca.pem"
 
     with open(ssl_ca, "w", encoding="utf-8") as cert_file:
         cert_file.write(ssl_ca_value)
-
+        if not ssl_ca_value.endswith("\n"):
+            cert_file.write("\n")
 else:
-    # Support a path to a certificate file.
-    if os.path.isabs(ssl_ca_value):
-        ssl_ca = ssl_ca_value
-    else:
-        ssl_ca = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            ssl_ca_value,
-        )
+    ssl_ca_path = Path(ssl_ca_value)
+    if not ssl_ca_path.is_absolute():
+        ssl_ca_path = BASE_DIR / ssl_ca_path
+    ssl_ca = str(ssl_ca_path)
 
 if not os.path.isfile(ssl_ca):
     raise RuntimeError(
-        "Aiven CA certificate not found. "
-        "Check the DB_SSL_CA environment variable."
+        "Aiven CA certificate not found. Check DB_SSL_CA."
     )
 
 # --------------------------------------------------
-# 3. Database configuration: Aiven MySQL
+# 3. Database configuration
 # --------------------------------------------------
 
 try:
@@ -101,26 +101,21 @@ database_url = URL.create(
 )
 
 app.config.update(
-    SECRET_KEY=os.environ["SECRET_KEY"],
     SQLALCHEMY_DATABASE_URI=database_url,
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     SQLALCHEMY_ENGINE_OPTIONS={
         "pool_pre_ping": True,
         "connect_args": {
-            "ssl": {
-                "ca": ssl_ca,
-            }
+            "ssl": {"ca": ssl_ca}
         },
     },
-    JWT_SECRET_KEY=os.environ["JWT_SECRET_KEY"],
-    JWT_ACCESS_TOKEN_EXPIRES=timedelta(minutes=30),
 )
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 # --------------------------------------------------
-# 4. CORS configuration
+# 4. CORS
 # --------------------------------------------------
 
 frontend_origin = os.environ["FRONTEND_ORIGIN"].rstrip("/")
@@ -146,7 +141,57 @@ limiter = Limiter(
 )
 
 # --------------------------------------------------
-# 6. User database model
+# 6. Serve frontend pages
+# --------------------------------------------------
+
+@app.get("/")
+def index_page():
+    return send_from_directory(str(BASE_DIR), "index.html")
+
+
+@app.get("/login")
+@app.get("/login.html")
+def login_page():
+    return send_from_directory(str(BASE_DIR), "login.html")
+
+
+@app.get("/register")
+@app.get("/register.html")
+def register_page():
+    return send_from_directory(str(BASE_DIR), "register.html")
+
+
+@app.get("/dashboard")
+@app.get("/dashboard.html")
+def dashboard_page():
+    return send_from_directory(str(BASE_DIR), "dashboard.html")
+
+
+# Serve frontend assets from their existing directories.
+@app.get("/css/<path:filename>")
+def css_files(filename):
+    return send_from_directory(str(BASE_DIR / "css"), filename)
+
+
+@app.get("/js/<path:filename>")
+def js_files(filename):
+    return send_from_directory(str(BASE_DIR / "js"), filename)
+
+
+# Optional asset directories, if used by your HTML.
+@app.get("/images/<path:filename>")
+def image_files(filename):
+    return send_from_directory(str(BASE_DIR / "images"), filename)
+
+
+@app.get("/assets/<path:filename>")
+def asset_files(filename):
+    return send_from_directory(str(BASE_DIR / "assets"), filename)
+
+
+# --------------------------------------------------
+# 7. User database model
+# The corresponding users table must exist in MySQL.
 # --------------------------------------------------
 
 class User(db.Model):
@@ -157,7 +202,6 @@ class User(db.Model):
         primary_key=True,
         autoincrement=True,
     )
-
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -189,27 +233,36 @@ class User(db.Model):
 
 
 # --------------------------------------------------
-# 7. API health check
+# 8. Health checks
 # --------------------------------------------------
-
-@app.get("/")
-def index():
-    return send_from_directory(
-        os.path.dirname(os.path.abspath(__file__)),
-        "index.html"
-    )
-
 
 @app.get("/api/health")
 def health():
     return jsonify({
-        "status": "ok",
         "service": "Jove EMS API",
+        "status": "ok",
     }), 200
 
 
+@app.get("/api/health/db")
+def database_health():
+    try:
+        db.session.execute(text("SELECT 1"))
+        return jsonify({
+            "service": "Jove EMS API",
+            "database": "connected",
+        }), 200
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Database health check failed.")
+        return jsonify({
+            "service": "Jove EMS API",
+            "database": "unavailable",
+        }), 503
+
+
 # --------------------------------------------------
-# 8. User registration
+# 9. User registration
 # --------------------------------------------------
 
 @app.post("/api/register")
@@ -226,13 +279,9 @@ def register():
             "error": "Enter a valid full name."
         }), 400
 
-    # Basic email format validation.
     if (
         len(email) > 255
-        or not re.fullmatch(
-            r"[^@\s]+@[^@\s]+\.[^@\s]+",
-            email,
-        )
+        or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
     ):
         return jsonify({
             "error": "Enter a valid email address."
@@ -248,22 +297,26 @@ def register():
             "error": "Password is too long."
         }), 400
 
-    if User.query.filter_by(email=email).first():
-        return jsonify({
-            "error": "An account with this email already exists."
-        }), 409
-
-    user = User(
-        full_name=full_name,
-        email=email,
-        password_hash=generate_password_hash(password),
-        role="operator",
-        is_active=True,
-    )
-
     try:
+        if User.query.filter_by(email=email).first():
+            return jsonify({
+                "error": "An account with this email already exists."
+            }), 409
+
+        user = User(
+            full_name=full_name,
+            email=email,
+            password_hash=generate_password_hash(password),
+            role="operator",
+            is_active=True,
+        )
+
         db.session.add(user)
         db.session.commit()
+
+        return jsonify({
+            "message": "Account created successfully. Please log in."
+        }), 201
 
     except IntegrityError:
         db.session.rollback()
@@ -278,13 +331,9 @@ def register():
             "error": "Unable to create the account. Please try again."
         }), 500
 
-    return jsonify({
-        "message": "Account created successfully. Please log in."
-    }), 201
-
 
 # --------------------------------------------------
-# 9. User login
+# 10. User login
 # --------------------------------------------------
 
 @app.post("/api/login")
@@ -295,67 +344,81 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = data.get("password", "")
 
-    if not isinstance(password, str) or not email:
+    if not email or not isinstance(password, str):
         return jsonify({
             "error": "Invalid email or password."
         }), 401
 
-    user = User.query.filter_by(email=email).first()
+    try:
+        user = User.query.filter_by(email=email).first()
 
-    if (
-        not user
-        or not check_password_hash(user.password_hash, password)
-        or not user.is_active
-    ):
+        if (
+            not user
+            or not check_password_hash(user.password_hash, password)
+            or not user.is_active
+        ):
+            return jsonify({
+                "error": "Invalid email or password."
+            }), 401
+
+        token = create_access_token(identity=str(user.id))
+
         return jsonify({
-            "error": "Invalid email or password."
-        }), 401
+            "message": "Login successful",
+            "access_token": token,
+            "user": {
+                "id": user.id,
+                "full_name": user.full_name,
+                "email": user.email,
+                "role": user.role,
+            },
+        }), 200
 
-    token = create_access_token(identity=str(user.id))
-
-    return jsonify({
-        "message": "Login successful",
-        "access_token": token,
-        "user": {
-            "id": user.id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "role": user.role,
-        },
-    }), 200
+    except Exception:
+        app.logger.exception("Login failed.")
+        return jsonify({
+            "error": "Unable to process login. Please try again."
+        }), 500
 
 
 # --------------------------------------------------
-# 10. Get currently authenticated user
+# 11. Verify authenticated user
 # --------------------------------------------------
 
 @app.get("/api/me")
 @jwt_required()
-def me():
+def current_user():
     user_id = get_jwt_identity()
 
     try:
         user = db.session.get(User, int(user_id))
+
+        if not user or not user.is_active:
+            return jsonify({
+                "error": "Account unavailable."
+            }), 401
+
+        return jsonify({
+            "id": user.id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role,
+        }), 200
+
     except (ValueError, TypeError):
         return jsonify({
             "error": "Invalid authentication token."
         }), 401
 
-    if not user or not user.is_active:
+    except Exception:
+        app.logger.exception("User verification failed.")
         return jsonify({
-            "error": "Account unavailable."
-        }), 401
-
-    return jsonify({
-        "id": user.id,
-        "full_name": user.full_name,
-        "email": user.email,
-        "role": user.role,
-    }), 200
+            "error": "Unable to verify the account."
+        }), 500
 
 
 # --------------------------------------------------
-# 11. Local development entry point
+# 12. Local development
 # --------------------------------------------------
 
 if __name__ == "__main__":
