@@ -144,14 +144,11 @@ limiter = Limiter(
 # 6. Serve frontend pages
 # --------------------------------------------------
 
+
 @app.get("/")
-def index_page():
-    return send_from_directory(str(BASE_DIR), "index.html")
-
-
-@app.get("/login")
 @app.get("/index.html")
-def login_page():
+@app.get("/login")
+def index_page():
     return send_from_directory(str(BASE_DIR), "index.html")
 
 
@@ -166,29 +163,27 @@ def register_page():
 def dashboard_page():
     return send_from_directory(str(BASE_DIR), "dashboard.html")
 
+@app.get("/login.css")
+def login_css():
+    return send_from_directory(str(BASE_DIR), "login.css")
 
-# Serve frontend assets from their existing directories.
-@app.get("/css/<path:filename>")
-def css_files(filename):
-    return send_from_directory(str(BASE_DIR / "css"), filename)
+@app.get("/register.css")
+def register_css():
+    return send_from_directory(str(BASE_DIR), "register.css")
 
-
-@app.get("/js/<path:filename>")
-def js_files(filename):
-    return send_from_directory(str(BASE_DIR / "js"), filename)
-
-
-# Optional asset directories, if used by your HTML.
-@app.get("/images/<path:filename>")
-def image_files(filename):
-    return send_from_directory(str(BASE_DIR / "images"), filename)
+@app.get("/dashboard.css")
+def dashboard_css():
+    return send_from_directory(str(BASE_DIR), "dashboard.css")
 
 
-@app.get("/assets/<path:filename>")
-def asset_files(filename):
-    return send_from_directory(str(BASE_DIR / "assets"), filename)
 
+@app.get("/register.js")
+def register_js():
+    return send_from_directory(str(BASE_DIR), "register.js")
 
+@app.get("/dashboard.js")
+def dashboard_js():
+    return send_from_directory(str(BASE_DIR), "dashboard.js")
 # --------------------------------------------------
 # 7. User database model
 # The corresponding users table must exist in MySQL.
