@@ -150,9 +150,9 @@ def index_page():
 
 
 @app.get("/login")
-@app.get("/login.html")
+@app.get("/index.html")
 def login_page():
-    return send_from_directory(str(BASE_DIR), "login.html")
+    return send_from_directory(str(BASE_DIR), "index.html")
 
 
 @app.get("/register")
