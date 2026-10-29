@@ -1,4 +1,3 @@
-
 "use strict";
 
 const form = document.getElementById("registerForm");
@@ -9,9 +8,9 @@ const fullNameInput = document.getElementById("full_name");
 const emailInput = document.getElementById("email");
 const companyInput = document.getElementById("company");
 const passwordInput = document.getElementById("password");
-const confirmPasswordInput =
-    document.getElementById("confirm_password");
+const confirmPasswordInput = document.getElementById("confirm_password");
 
+// Show a message to the user.
 function showMessage(text, type = "error") {
     message.textContent = text;
     message.className = `message ${type}`;
@@ -24,6 +23,7 @@ function clearMessage() {
     message.hidden = true;
 }
 
+// Submit registration details to the Flask backend.
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearMessage();
@@ -34,15 +34,22 @@ form.addEventListener("submit", async (event) => {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
 
-    if (!full_name || !email || !password) {
+    // Validate required fields.
+    if (!full_name || !email || !password || !confirmPassword) {
         showMessage("Please complete all required fields.");
         return;
     }
 
+    // Validate email format.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showMessage("Please enter a valid email address.");
+        emailInput.focus();
+        return;
+    }
+
+    // Validate password length.
     if (password.length < 12) {
-        showMessage(
-            "Your password must contain at least 12 characters."
-        );
+        showMessage("Your password must contain at least 12 characters.");
         passwordInput.focus();
         return;
     }
@@ -53,6 +60,7 @@ form.addEventListener("submit", async (event) => {
         return;
     }
 
+    // Confirm password.
     if (password !== confirmPassword) {
         showMessage("Passwords do not match.");
         confirmPasswordInput.focus();
@@ -66,22 +74,56 @@ form.addEventListener("submit", async (event) => {
         const response = await fetch("/api/register", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
+            credentials: "same-origin",
             body: JSON.stringify({
-                full_name,
-                email,
-                password
-                // Company is not yet stored by the current Flask model.
+                full_name: full_name,
+                email: email,
+                password: password,
+                company: company
             })
         });
 
-        const result = await response.json().catch(() => ({}));
+        // Read the response safely, even if the server returns HTML.
+        const responseText = await response.text();
+        let result = {};
+
+        try {
+            result = responseText ? JSON.parse(responseText) : {};
+        } catch {
+            result = {};
+        }
 
         if (!response.ok) {
+            if (response.status === 409) {
+                throw new Error(
+                    result.message ||
+                    result.error ||
+                    "An account with this email already exists."
+                );
+            }
+
+            if (response.status === 400) {
+                throw new Error(
+                    result.message ||
+                    result.error ||
+                    "Please check your registration details."
+                );
+            }
+
+            if (response.status >= 500) {
+                throw new Error(
+                    result.message ||
+                    result.error ||
+                    "Server error. Please try again later."
+                );
+            }
+
             throw new Error(
-                result.error ||
                 result.message ||
+                result.error ||
                 `Registration failed (HTTP ${response.status}).`
             );
         }
@@ -94,7 +136,9 @@ form.addEventListener("submit", async (event) => {
 
         form.reset();
 
-        // Allow the success message to appear before redirecting.
+        // Prevent duplicate submissions while redirecting.
+        button.textContent = "Registration Successful";
+
         window.setTimeout(() => {
             window.location.href = "/login";
         }, 1500);
@@ -111,7 +155,10 @@ form.addEventListener("submit", async (event) => {
             );
         }
     } finally {
-        button.disabled = false;
-        button.textContent = "Create Account";
+        // Do not re-enable the button during the success redirect.
+        if (!message.classList.contains("success")) {
+            button.disabled = false;
+            button.textContent = "Create Account";
+        }
     }
 });
