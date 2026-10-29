@@ -4,7 +4,7 @@ import re
 from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import (
     JWTManager,
@@ -194,11 +194,10 @@ class User(db.Model):
 
 @app.get("/")
 def index():
-    return jsonify({
-        "service": "Jove EMS API",
-        "status": "running",
-        "health_endpoint": "/api/health",
-    }), 200
+    return send_from_directory(
+        os.path.dirname(os.path.abspath(__file__)),
+        "index.html"
+    )
 
 
 @app.get("/api/health")
