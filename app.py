@@ -151,16 +151,15 @@ limiter = Limiter(
     default_limits=[],
 )
 
-
 # --------------------------------------------------
 # 5. EMAIL CONFIGURATION
 # --------------------------------------------------
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL").strip()
-SMTP_EMAIL = os.getenv("SMTP_EMAIL").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = int(os.getenv("SMTP_PORT"))
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip()
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").replace(" ", "")
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com").strip()
+SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
 
 
 def send_admin_otp_email(
@@ -172,7 +171,7 @@ def send_admin_otp_email(
     message = EmailMessage()
 
     message["Subject"] = "Jove EMS - Registration Approval OTP"
-    message["From"] = SMTP_EMAIL
+    message["From"] = f"Jove EMS <{SMTP_EMAIL}>"
     message["To"] = ADMIN_EMAIL
 
     message.set_content(
@@ -203,24 +202,30 @@ Jove EMS
 """
     )
 
-    with smtplib.SMTP(
-        SMTP_SERVER,
-        SMTP_PORT,
-        timeout=20
-    ) as server:
+    try:
+        # Gmail SMTP over SSL - Port 465
+        with smtplib.SMTP_SSL(
+            SMTP_SERVER,
+            SMTP_PORT,
+            timeout=20
+        ) as server:
 
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
+            server.login(
+                SMTP_EMAIL,
+                SMTP_PASSWORD
+            )
 
-        server.login(
-            SMTP_EMAIL,
-            SMTP_PASSWORD
+            server.send_message(message)
+
+        app.logger.info(
+            "Admin OTP email sent successfully."
         )
 
-        server.send_message(message)
-
-
+    except Exception:
+        app.logger.exception(
+            "Gmail SMTP email delivery failed."
+        )
+        raise
 # --------------------------------------------------
 # 6. USER DATABASE MODEL
 # --------------------------------------------------
