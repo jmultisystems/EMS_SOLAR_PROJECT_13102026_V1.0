@@ -149,7 +149,7 @@ limiter = Limiter(
 )
 
 # --------------------------------------------------
-# 6. Frontend pages
+# 6. Frontend pages and static files
 # --------------------------------------------------
 
 @app.get("/")
@@ -220,6 +220,7 @@ class User(db.Model):
         nullable=False,
     )
 
+    # IMPORTANT: Must match the Aiven MySQL column.
     company_name = db.Column(
         db.String(150),
         nullable=False,
@@ -308,18 +309,19 @@ def register():
 
     full_name = str(data.get("full_name") or "").strip()
     email = str(data.get("email") or "").strip().lower()
+
+    # Company name is optional, but database column is NOT NULL.
+    # Therefore, an empty string is stored when not provided.
     company_name = str(data.get("company_name") or "").strip()
 
     password = data.get("password")
     confirm_password = data.get("confirm_password")
 
-    # Full name validation
     if not full_name or len(full_name) > 100:
         return jsonify({
             "error": "Enter a valid full name."
         }), 400
 
-    # Email validation
     if (
         len(email) > 255
         or not re.fullmatch(
@@ -331,13 +333,11 @@ def register():
             "error": "Enter a valid email address."
         }), 400
 
-    # Company name validation (optional)
     if len(company_name) > 150:
         return jsonify({
             "error": "Company name must not exceed 150 characters."
         }), 400
 
-    # Password validation
     if not isinstance(password, str):
         return jsonify({
             "error": "Enter a valid password."
@@ -353,7 +353,6 @@ def register():
             "error": "Password is too long."
         }), 400
 
-    # Confirm password validation
     if not isinstance(confirm_password, str):
         return jsonify({
             "error": "Please confirm your password."
@@ -372,6 +371,7 @@ def register():
                 "error": "An account with this email already exists."
             }), 409
 
+        # Explicitly include ALL required database fields.
         user = User(
             full_name=full_name,
             email=email,
@@ -383,6 +383,11 @@ def register():
 
         db.session.add(user)
         db.session.commit()
+
+        app.logger.info(
+            "User registered successfully. User ID: %s",
+            user.id
+        )
 
         return jsonify({
             "message": "Account created successfully. Please log in."
