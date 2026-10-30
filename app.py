@@ -1,7 +1,10 @@
 
 import os
 import re
-from datetime import timedelta
+import secrets
+import smtplib
+from datetime import datetime, timedelta
+from email.message import EmailMessage
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,15 +23,16 @@ from sqlalchemy import URL, text
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+
+# --------------------------------------------------
+# 1. APPLICATION CONFIGURATION
+# --------------------------------------------------
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 
 app = Flask(__name__)
-
-# --------------------------------------------------
-# 1. Environment configuration
-# --------------------------------------------------
 
 required_vars = [
     "SECRET_KEY",
@@ -40,297 +44,454 @@ required_vars = [
     "DB_PASSWORD",
     "DB_SSL_CA",
     "FRONTEND_ORIGIN",
+    "ADMIN_EMAIL",
+    "SMTP_EMAIL",
+    "SMTP_PASSWORD",
+    "SMTP_SERVER",
+    "SMTP_PORT",
 ]
 
-missing = [
-    key for key in required_vars
-    if not os.getenv(key, "").strip()
+missing_vars = [
+    name for name in required_vars
+    if not os.getenv(name)
 ]
 
-if missing:
+if missing_vars:
     raise RuntimeError(
-        "Missing environment variables: " + ", ".join(missing)
+        "Missing environment variables: "
+        + ", ".join(missing_vars)
     )
 
-app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
-app.config["JWT_SECRET_KEY"] = os.environ["JWT_SECRET_KEY"]
+
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
 
 # --------------------------------------------------
-# 2. Aiven MySQL SSL certificate
-# DB_SSL_CA can contain PEM contents or a file path.
+# 2. AIVEN MYSQL SSL CONFIGURATION
 # --------------------------------------------------
 
-ssl_ca_value = os.environ["DB_SSL_CA"].strip()
+db_ssl_ca = os.getenv("DB_SSL_CA")
 
-if "-----BEGIN CERTIFICATE-----" in ssl_ca_value:
-    ssl_ca_value = ssl_ca_value.replace("\\n", "\n")
+if "-----BEGIN CERTIFICATE-----" in db_ssl_ca:
+    ssl_ca_path = "/tmp/jove_ems_aiven_ca.pem"
 
-    ssl_ca = "/tmp/jove_ems_aiven_ca.pem"
+    with open(ssl_ca_path, "w", encoding="utf-8") as ca_file:
+        ca_file.write(db_ssl_ca)
 
-    with open(ssl_ca, "w", encoding="utf-8") as cert_file:
-        cert_file.write(ssl_ca_value)
-
-        if not ssl_ca_value.endswith("\n"):
-            cert_file.write("\n")
 else:
-    ssl_ca_path = Path(ssl_ca_value)
+    ca_path = Path(db_ssl_ca)
 
-    if not ssl_ca_path.is_absolute():
-        ssl_ca_path = BASE_DIR / ssl_ca_path
+    if not ca_path.is_absolute():
+        ca_path = BASE_DIR / ca_path
 
-    ssl_ca = str(ssl_ca_path)
+    if not ca_path.exists():
+        raise RuntimeError(
+            f"Database SSL certificate not found: {ca_path}"
+        )
 
-if not os.path.isfile(ssl_ca):
-    raise RuntimeError(
-        "Aiven CA certificate not found. Check DB_SSL_CA."
-    )
+    ssl_ca_path = str(ca_path)
 
-# --------------------------------------------------
-# 3. Database configuration
-# --------------------------------------------------
-
-try:
-    database_port = int(os.environ["DB_PORT"])
-except ValueError as exc:
-    raise RuntimeError(
-        "DB_PORT must be a valid port number."
-    ) from exc
 
 database_url = URL.create(
     "mysql+pymysql",
-    username=os.environ["DB_USER"],
-    password=os.environ["DB_PASSWORD"],
-    host=os.environ["DB_HOST"],
-    port=database_port,
-    database=os.environ["DB_NAME"],
+    username=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    host=os.getenv("DB_HOST"),
+    port=int(os.getenv("DB_PORT")),
+    database=os.getenv("DB_NAME"),
 )
 
-app.config.update(
-    SQLALCHEMY_DATABASE_URI=database_url,
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    SQLALCHEMY_ENGINE_OPTIONS={
-        "pool_pre_ping": True,
-        "connect_args": {
-            "ssl": {
-                "ca": ssl_ca
-            }
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "connect_args": {
+        "ssl": {
+            "ca": ssl_ca_path
         },
+        "connect_timeout": 10,
     },
-)
+}
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
+
 # --------------------------------------------------
-# 4. CORS
+# 3. CORS CONFIGURATION
 # --------------------------------------------------
 
-frontend_origin = os.environ["FRONTEND_ORIGIN"].rstrip("/")
+frontend_origins = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_ORIGIN", "").split(",")
+    if origin.strip()
+]
 
 CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": [frontend_origin],
+            "origins": frontend_origins
         }
     },
+    supports_credentials=True,
 )
 
+
 # --------------------------------------------------
-# 5. Rate limiting
+# 4. RATE LIMITER
 # --------------------------------------------------
 
 limiter = Limiter(
-    key_func=get_remote_address,
+    get_remote_address,
     app=app,
-    default_limits=[],
     storage_uri="memory://",
+    default_limits=[],
 )
 
-# --------------------------------------------------
-# 6. Frontend pages and static files
-# --------------------------------------------------
-
-@app.get("/")
-@app.get("/index.html")
-@app.get("/login")
-def index_page():
-    return send_from_directory(str(BASE_DIR), "index.html")
-
-
-@app.get("/register")
-@app.get("/register.html")
-def register_page():
-    return send_from_directory(str(BASE_DIR), "register.html")
-
-
-@app.get("/dashboard")
-@app.get("/dashboard.html")
-def dashboard_page():
-    return send_from_directory(str(BASE_DIR), "dashboard.html")
-
-
-@app.get("/login.css")
-def login_css():
-    return send_from_directory(str(BASE_DIR), "login.css")
-
-
-@app.get("/register.css")
-def register_css():
-    return send_from_directory(str(BASE_DIR), "register.css")
-
-
-@app.get("/dashboard.css")
-def dashboard_css():
-    return send_from_directory(str(BASE_DIR), "dashboard.css")
-
-
-@app.get("/register.js")
-def register_js():
-    return send_from_directory(str(BASE_DIR), "register.js")
-
-
-@app.get("/dashboard.js")
-def dashboard_js():
-    return send_from_directory(str(BASE_DIR), "dashboard.js")
-
 
 # --------------------------------------------------
-# 7. User database model
+# 5. EMAIL CONFIGURATION
+# --------------------------------------------------
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL").strip()
+SMTP_EMAIL = os.getenv("SMTP_EMAIL").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
+
+
+def send_admin_otp_email(
+    otp,
+    full_name,
+    user_email,
+    company_name
+):
+    message = EmailMessage()
+
+    message["Subject"] = "Jove EMS - Registration Approval OTP"
+    message["From"] = SMTP_EMAIL
+    message["To"] = ADMIN_EMAIL
+
+    message.set_content(
+        f"""
+JOVE MULTISYSTEMS
+Energy Management System
+
+A new user has requested access to Jove EMS.
+
+Registration Details
+--------------------
+Name: {full_name}
+Email: {user_email}
+Company: {company_name or "Not provided"}
+
+ADMIN APPROVAL OTP
+------------------
+OTP: {otp}
+
+This OTP is valid for 5 minutes.
+Maximum incorrect attempts: 5.
+
+Please share this OTP only with the intended applicant
+after verifying their registration request.
+
+Regards,
+Jove EMS
+"""
+    )
+
+    with smtplib.SMTP(
+        SMTP_SERVER,
+        SMTP_PORT,
+        timeout=20
+    ) as server:
+
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+
+        server.login(
+            SMTP_EMAIL,
+            SMTP_PASSWORD
+        )
+
+        server.send_message(message)
+
+
+# --------------------------------------------------
+# 6. USER DATABASE MODEL
 # --------------------------------------------------
 
 class User(db.Model):
+
     __tablename__ = "users"
 
     id = db.Column(
         db.BigInteger,
         primary_key=True,
-        autoincrement=True,
+        autoincrement=True
     )
 
     full_name = db.Column(
         db.String(100),
-        nullable=False,
+        nullable=False
     )
 
     email = db.Column(
         db.String(255),
         unique=True,
-        nullable=False,
+        nullable=False
     )
 
-    # IMPORTANT: Must match the Aiven MySQL column.
     company_name = db.Column(
         db.String(150),
         nullable=False,
         default="",
-        server_default="",
+        server_default=""
     )
 
     password_hash = db.Column(
         db.String(255),
-        nullable=False,
+        nullable=False
     )
 
     role = db.Column(
         db.Enum("admin", "operator", "viewer"),
         nullable=False,
-        default="operator",
+        default="operator"
     )
 
     is_active = db.Column(
         db.Boolean,
         nullable=False,
         default=True,
-        server_default=text("1"),
+        server_default=text("1")
     )
 
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
+        server_default=text("CURRENT_TIMESTAMP")
     )
 
     updated_at = db.Column(
         db.DateTime,
         nullable=False,
-        server_default=db.func.current_timestamp(),
-        onupdate=db.func.current_timestamp(),
+        server_default=text("CURRENT_TIMESTAMP"),
+        onupdate=datetime.utcnow
     )
 
 
 # --------------------------------------------------
-# 8. Health checks
+# 7. PENDING REGISTRATION MODEL
+# --------------------------------------------------
+
+class PendingRegistration(db.Model):
+
+    __tablename__ = "pending_registrations"
+
+    id = db.Column(
+        db.BigInteger,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    email = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=False
+    )
+
+    full_name = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    company_name = db.Column(
+        db.String(150),
+        nullable=False,
+        default=""
+    )
+
+    otp_hash = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    expires_at = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    attempts = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+
+# --------------------------------------------------
+# 8. COMMON VALIDATION
+# --------------------------------------------------
+
+def valid_email(email):
+    return bool(
+        re.fullmatch(
+            r"[^@\s]+@[^@\s]+\.[^@\s]+",
+            email
+        )
+    )
+
+
+def get_json_body():
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return None
+
+    return data
+
+
+# --------------------------------------------------
+# 9. FRONTEND PAGE ROUTES
+# --------------------------------------------------
+
+@app.get("/")
+@app.get("/index.html")
+@app.get("/login")
+def login_page():
+    return send_from_directory(BASE_DIR, "index.html")
+
+
+@app.get("/register")
+@app.get("/register.html")
+def register_page():
+    return send_from_directory(BASE_DIR, "register.html")
+
+
+@app.get("/dashboard")
+@app.get("/dashboard.html")
+def dashboard_page():
+    return send_from_directory(BASE_DIR, "dashboard.html")
+
+
+@app.get("/energy_meter_data")
+@app.get("/energy_meter_data.html")
+def energy_meter_data_page():
+    return send_from_directory(BASE_DIR, "energy_meter_data.html")
+
+
+# --------------------------------------------------
+# 10. CSS FILE ROUTES
+# --------------------------------------------------
+
+@app.get("/login.css")
+@app.get("/register.css")
+@app.get("/dashboard.css")
+@app.get("/energy_meter_data.css")
+def css_files():
+    return send_from_directory(
+        BASE_DIR,
+        request.path.lstrip("/")
+    )
+
+
+# --------------------------------------------------
+# 11. JAVASCRIPT FILE ROUTES
+# --------------------------------------------------
+
+@app.get("/register.js")
+@app.get("/dashboard.js")
+@app.get("/energy_meter_data.js")
+def javascript_files():
+    return send_from_directory(
+        BASE_DIR,
+        request.path.lstrip("/")
+    )
+
+
+# --------------------------------------------------
+# 12. HEALTH CHECK API
 # --------------------------------------------------
 
 @app.get("/api/health")
-def health():
+def health_check():
     return jsonify({
+        "status": "success",
         "service": "Jove EMS API",
-        "status": "ok",
+        "message": "API is running"
     }), 200
 
 
 @app.get("/api/health/db")
-def database_health():
+def database_health_check():
+
     try:
         db.session.execute(text("SELECT 1"))
 
         return jsonify({
-            "service": "Jove EMS API",
-            "database": "connected",
+            "status": "success",
+            "database": "connected"
         }), 200
 
     except Exception:
-        db.session.rollback()
-        app.logger.exception("Database health check failed.")
+        app.logger.exception("Database health check failed")
 
         return jsonify({
-            "service": "Jove EMS API",
-            "database": "unavailable",
-        }), 503
+            "status": "error",
+            "database": "connection failed"
+        }), 500
 
 
 # --------------------------------------------------
-# 9. User registration
+# 13. REQUEST REGISTRATION OTP
 # --------------------------------------------------
 
-@app.post("/api/register")
-@limiter.limit("5 per minute")
-def register():
+@app.post("/api/request-registration-otp")
+@limiter.limit("3 per 10 minutes")
+def request_registration_otp():
 
-    data = request.get_json(silent=True)
+    data = get_json_body()
 
-    if not isinstance(data, dict):
+    if data is None:
         return jsonify({
-            "error": "Invalid registration request."
+            "error": "Invalid request data."
         }), 400
 
-    full_name = str(data.get("full_name") or "").strip()
-    email = str(data.get("email") or "").strip().lower()
+    full_name = str(
+        data.get("full_name", "")
+    ).strip()
 
-    # Company name is optional, but database column is NOT NULL.
-    # Therefore, an empty string is stored when not provided.
-    company_name = str(data.get("company_name") or "").strip()
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
 
-    password = data.get("password")
-    confirm_password = data.get("confirm_password")
+    company_name = str(
+        data.get("company_name", "")
+    ).strip()
 
-    if not full_name or len(full_name) > 100:
+    if not full_name or not email:
         return jsonify({
-            "error": "Enter a valid full name."
+            "error": "Full name and email are required."
         }), 400
 
-    if (
-        len(email) > 255
-        or not re.fullmatch(
-            r"[^@\s]+@[^@\s]+\.[^@\s]+",
-            email,
-        )
-    ):
+    if len(full_name) > 100:
         return jsonify({
-            "error": "Enter a valid email address."
+            "error": "Full name must not exceed 100 characters."
+        }), 400
+
+    if len(email) > 255 or not valid_email(email):
+        return jsonify({
+            "error": "Please enter a valid email address."
         }), 400
 
     if len(company_name) > 150:
@@ -338,185 +499,404 @@ def register():
             "error": "Company name must not exceed 150 characters."
         }), 400
 
-    if not isinstance(password, str):
-        return jsonify({
-            "error": "Enter a valid password."
-        }), 400
-
-    if len(password) < 12:
-        return jsonify({
-            "error": "Password must be at least 12 characters."
-        }), 400
-
-    if len(password) > 128:
-        return jsonify({
-            "error": "Password is too long."
-        }), 400
-
-    if not isinstance(confirm_password, str):
-        return jsonify({
-            "error": "Please confirm your password."
-        }), 400
-
-    if password != confirm_password:
-        return jsonify({
-            "error": "Password and confirm password do not match."
-        }), 400
-
     try:
-        existing_user = User.query.filter_by(email=email).first()
+        existing_user = User.query.filter_by(
+            email=email
+        ).first()
 
         if existing_user:
             return jsonify({
                 "error": "An account with this email already exists."
             }), 409
 
-        # Explicitly include ALL required database fields.
-        user = User(
-            full_name=full_name,
-            email=email,
-            company_name=company_name,
-            password_hash=generate_password_hash(password),
-            role="operator",
-            is_active=True,
-        )
+        otp = f"{secrets.randbelow(900000) + 100000}"
 
-        db.session.add(user)
+        now = datetime.utcnow()
+
+        pending = PendingRegistration.query.filter_by(
+            email=email
+        ).first()
+
+        if pending:
+            pending.full_name = full_name
+            pending.company_name = company_name
+            pending.otp_hash = generate_password_hash(otp)
+            pending.expires_at = now + timedelta(minutes=5)
+            pending.attempts = 0
+            pending.created_at = now
+
+        else:
+            pending = PendingRegistration(
+                full_name=full_name,
+                email=email,
+                company_name=company_name,
+                otp_hash=generate_password_hash(otp),
+                expires_at=now + timedelta(minutes=5),
+                attempts=0,
+                created_at=now
+            )
+
+            db.session.add(pending)
+
         db.session.commit()
 
-        app.logger.info(
-            "User registered successfully. User ID: %s",
-            user.id
-        )
+        try:
+            send_admin_otp_email(
+                otp=otp,
+                full_name=full_name,
+                user_email=email,
+                company_name=company_name
+            )
+
+        except Exception:
+            app.logger.exception("Admin OTP email sending failed")
+
+            db.session.delete(pending)
+            db.session.commit()
+
+            return jsonify({
+                "error": "Unable to send approval OTP. Please try again later."
+            }), 502
 
         return jsonify({
+            "status": "success",
+            "message": "OTP sent to the Jove EMS Admin. Please contact the Admin for the approval code."
+        }), 200
+
+    except IntegrityError:
+        db.session.rollback()
+
+        return jsonify({
+            "error": "Registration request could not be processed. Please try again."
+        }), 409
+
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Registration OTP request failed")
+
+        return jsonify({
+            "error": "An unexpected error occurred while requesting OTP."
+        }), 500
+
+
+# --------------------------------------------------
+# 14. VERIFY OTP AND CREATE USER ACCOUNT
+# --------------------------------------------------
+
+@app.post("/api/verify-registration-otp")
+@limiter.limit("10 per 10 minutes")
+def verify_registration_otp():
+
+    data = get_json_body()
+
+    if data is None:
+        return jsonify({
+            "error": "Invalid request data."
+        }), 400
+
+    full_name = str(
+        data.get("full_name", "")
+    ).strip()
+
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
+
+    company_name = str(
+        data.get("company_name", "")
+    ).strip()
+
+    otp = str(
+        data.get("otp", "")
+    ).strip()
+
+    password = data.get("password", "")
+    confirm_password = data.get("confirm_password", "")
+
+    if not full_name or not email or not otp:
+        return jsonify({
+            "error": "Please complete all required fields."
+        }), 400
+
+    if not isinstance(password, str) or not isinstance(confirm_password, str):
+        return jsonify({
+            "error": "Invalid password data."
+        }), 400
+
+    if len(full_name) > 100 or len(company_name) > 150:
+        return jsonify({
+            "error": "Registration details exceed the allowed length."
+        }), 400
+
+    if len(email) > 255 or not valid_email(email):
+        return jsonify({
+            "error": "Please enter a valid email address."
+        }), 400
+
+    if not re.fullmatch(r"[0-9]{6}", otp):
+        return jsonify({
+            "error": "Please enter a valid 6-digit OTP."
+        }), 400
+
+    if len(password) < 12 or len(password) > 128:
+        return jsonify({
+            "error": "Password must contain between 12 and 128 characters."
+        }), 400
+
+    if password != confirm_password:
+        return jsonify({
+            "error": "Passwords do not match."
+        }), 400
+
+    try:
+        # Lock the pending registration row during verification.
+        pending = (
+            PendingRegistration.query
+            .filter_by(email=email)
+            .with_for_update()
+            .first()
+        )
+
+        if not pending:
+            return jsonify({
+                "error": "No pending registration found. Please request a new OTP."
+            }), 404
+
+        now = datetime.utcnow()
+
+        if pending.expires_at <= now:
+            db.session.delete(pending)
+            db.session.commit()
+
+            return jsonify({
+                "error": "OTP has expired. Please request a new OTP."
+            }), 400
+
+        if pending.attempts >= 5:
+            db.session.delete(pending)
+            db.session.commit()
+
+            return jsonify({
+                "error": "Maximum OTP attempts reached. Please request a new OTP."
+            }), 429
+
+        if not check_password_hash(pending.otp_hash, otp):
+
+            pending.attempts += 1
+
+            remaining = 5 - pending.attempts
+
+            if remaining <= 0:
+                db.session.delete(pending)
+                db.session.commit()
+
+                return jsonify({
+                    "error": "Maximum OTP attempts reached. Please request a new OTP."
+                }), 429
+
+            db.session.commit()
+
+            return jsonify({
+                "error": f"Incorrect OTP. {remaining} attempts remaining."
+            }), 400
+
+        # Confirm the details match the pending request.
+        if (
+            pending.full_name != full_name
+            or pending.company_name != company_name
+        ):
+            return jsonify({
+                "error": "Registration details do not match the OTP request."
+            }), 400
+
+        existing_user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if existing_user:
+            db.session.delete(pending)
+            db.session.commit()
+
+            return jsonify({
+                "error": "An account with this email already exists."
+            }), 409
+
+        new_user = User(
+            full_name=pending.full_name,
+            email=pending.email,
+            company_name=pending.company_name,
+            password_hash=generate_password_hash(password),
+            role="operator",
+            is_active=True
+        )
+
+        db.session.add(new_user)
+        db.session.delete(pending)
+
+        db.session.commit()
+
+        return jsonify({
+            "status": "success",
             "message": "Account created successfully. Please log in."
         }), 201
 
     except IntegrityError:
         db.session.rollback()
-        app.logger.exception("Registration database integrity error.")
 
         return jsonify({
-            "error": "An account with this email already exists."
+            "error": "An account with this email may already exist."
         }), 409
 
     except Exception:
         db.session.rollback()
-        app.logger.exception("User registration failed.")
+        app.logger.exception("OTP verification failed")
 
         return jsonify({
-            "error": "Unable to create the account. Please try again."
+            "error": "An unexpected error occurred during registration."
         }), 500
 
 
 # --------------------------------------------------
-# 10. User login
+# 15. DISABLE OLD DIRECT REGISTRATION API
+# --------------------------------------------------
+
+@app.post("/api/register")
+def old_registration_disabled():
+
+    return jsonify({
+        "error": "Direct registration is disabled. Please use the Admin OTP registration process."
+    }), 410
+
+
+# --------------------------------------------------
+# 16. USER LOGIN API
 # --------------------------------------------------
 
 @app.post("/api/login")
 @limiter.limit("5 per minute")
 def login():
 
-    data = request.get_json(silent=True)
+    data = get_json_body()
 
-    if not isinstance(data, dict):
+    if data is None:
         return jsonify({
-            "error": "Invalid email or password."
-        }), 401
+            "error": "Invalid request data."
+        }), 400
 
-    email = str(data.get("email") or "").strip().lower()
-    password = data.get("password")
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
 
-    if not email or not isinstance(password, str):
+    password = data.get("password", "")
+
+    if not email or not isinstance(password, str) or not password:
         return jsonify({
-            "error": "Invalid email or password."
-        }), 401
+            "error": "Email and password are required."
+        }), 400
 
     try:
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(
+            email=email
+        ).first()
 
         if (
             not user
             or not check_password_hash(user.password_hash, password)
-            or not user.is_active
         ):
             return jsonify({
                 "error": "Invalid email or password."
             }), 401
 
-        token = create_access_token(
+        if not user.is_active:
+            return jsonify({
+                "error": "Your account is inactive. Please contact the Admin."
+            }), 403
+
+        access_token = create_access_token(
             identity=str(user.id)
         )
 
         return jsonify({
+            "status": "success",
             "message": "Login successful",
-            "access_token": token,
+            "access_token": access_token,
             "user": {
                 "id": user.id,
                 "full_name": user.full_name,
                 "email": user.email,
                 "company_name": user.company_name,
-                "role": user.role,
-            },
+                "role": user.role
+            }
         }), 200
 
     except Exception:
-        db.session.rollback()
-        app.logger.exception("Login failed.")
+        app.logger.exception("Login failed")
 
         return jsonify({
-            "error": "Unable to process login. Please try again."
+            "error": "Unable to process login request."
         }), 500
 
 
 # --------------------------------------------------
-# 11. Verify authenticated user
+# 17. CURRENT USER API
 # --------------------------------------------------
 
 @app.get("/api/me")
 @jwt_required()
-def current_user():
-
-    user_id = get_jwt_identity()
+def get_current_user():
 
     try:
-        user = db.session.get(User, int(user_id))
+        user_id = get_jwt_identity()
 
-        if not user or not user.is_active:
+        user = db.session.get(
+            User,
+            int(user_id)
+        )
+
+        if not user:
             return jsonify({
-                "error": "Account unavailable."
-            }), 401
+                "error": "User not found."
+            }), 404
+
+        if not user.is_active:
+            return jsonify({
+                "error": "Your account is inactive."
+            }), 403
 
         return jsonify({
-            "id": user.id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "company_name": user.company_name,
-            "role": user.role,
+            "status": "success",
+            "user": {
+                "id": user.id,
+                "full_name": user.full_name,
+                "email": user.email,
+                "company_name": user.company_name,
+                "role": user.role
+            }
         }), 200
 
-    except (ValueError, TypeError):
-        return jsonify({
-            "error": "Invalid authentication token."
-        }), 401
-
     except Exception:
-        db.session.rollback()
-        app.logger.exception("User verification failed.")
+        app.logger.exception("Current user lookup failed")
 
         return jsonify({
-            "error": "Unable to verify the account."
+            "error": "Unable to retrieve user details."
         }), 500
 
 
 # --------------------------------------------------
-# 12. Local development
+# 18. CREATE DATABASE TABLES IF MISSING
+# --------------------------------------------------
+
+with app.app_context():
+    db.create_all()
+
+
+# --------------------------------------------------
+# 19. LOCAL DEVELOPMENT
 # --------------------------------------------------
 
 if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
         port=5000,
-        debug=False,
+        debug=False
     )

@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <meta name="theme-color" content="#064e3b">
 
     <title>Create Account | Jove EMS</title>
@@ -14,47 +13,23 @@
 </head>
 
 <body>
-
     <main class="register-container">
 
-        <!-- Brand -->
         <div class="brand">
-
-            <div class="brand-icon" aria-hidden="true">
-                J
-            </div>
-
-            <p class="brand-name">
-                JOVE MULTISYSTEMS
-            </p>
-
-            <p class="brand-subtitle">
-                Energy Management System
-            </p>
-
+            <div class="brand-icon" aria-hidden="true">J</div>
+            <p class="brand-name">JOVE MULTISYSTEMS</p>
+            <p class="brand-subtitle">Energy Management System</p>
         </div>
 
-        <!-- Page Heading -->
         <header class="page-heading">
-
             <h1>Create Your Account</h1>
-
-            <p>
-                Register to access the Jove EMS platform.
-            </p>
-
+            <p>Register to access the Jove EMS platform.</p>
         </header>
 
-        <!-- Registration Form -->
         <form id="registerForm">
 
-            <!-- Full Name -->
             <div class="form-group">
-
-                <label for="full_name">
-                    Full Name
-                </label>
-
+                <label for="full_name">Full Name</label>
                 <input
                     type="text"
                     id="full_name"
@@ -64,16 +39,10 @@
                     maxlength="100"
                     required
                 >
-
             </div>
 
-            <!-- Email -->
             <div class="form-group">
-
-                <label for="email">
-                    Email Address
-                </label>
-
+                <label for="email">Email Address</label>
                 <input
                     type="email"
                     id="email"
@@ -83,17 +52,13 @@
                     maxlength="255"
                     required
                 >
-
             </div>
 
-            <!-- Company Name -->
             <div class="form-group">
-
                 <label for="company_name">
                     Company Name
                     <span class="optional">(Optional)</span>
                 </label>
-
                 <input
                     type="text"
                     id="company_name"
@@ -102,55 +67,70 @@
                     autocomplete="organization"
                     maxlength="150"
                 >
-
             </div>
 
-            <!-- Password -->
-            <div class="form-group">
+            <!-- OTP section: hidden initially -->
+            <div id="otpSection" hidden>
 
-                <label for="password">
-                    Password
-                </label>
+                <div class="form-group">
+                    <label for="otp">Admin Approval OTP</label>
+                    <input
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        placeholder="Enter 6-digit OTP"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        disabled
+                    >
+                    <small>
+                        Enter the 6-digit approval code provided by the Jove EMS Admin.
+                    </small>
+                </div>
 
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Minimum 12 characters"
-                    autocomplete="new-password"
-                    minlength="12"
-                    maxlength="128"
-                    aria-describedby="passwordHint"
-                    required
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Minimum 12 characters"
+                        autocomplete="new-password"
+                        minlength="12"
+                        maxlength="128"
+                        disabled
+                    >
+                    <small id="passwordHint">
+                        Use at least 12 characters.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Re-enter your password"
+                        autocomplete="new-password"
+                        minlength="12"
+                        maxlength="128"
+                        disabled
+                    >
+                </div>
+
+                <button
+                    type="button"
+                    id="resendOtpButton"
+                    hidden
                 >
-
-                <small id="passwordHint">
-                    Use at least 12 characters.
-                </small>
+                    Resend OTP
+                </button>
 
             </div>
 
-            <!-- Confirm Password -->
-            <div class="form-group">
-
-                <label for="confirm_password">
-                    Confirm Password
-                </label>
-
-                <input
-                    type="password"
-                    id="confirm_password"
-                    name="confirm_password"
-                    placeholder="Re-enter your password"
-                    autocomplete="new-password"
-                    minlength="12"
-                    maxlength="128"
-                    required
-                >
-
-            </div>
-
-            <!-- Status Message -->
             <div
                 id="message"
                 class="message"
@@ -159,33 +139,21 @@
                 hidden
             ></div>
 
-            <!-- Submit Button -->
-            <button
-                type="submit"
-                id="registerButton"
-            >
-                Create Account
+            <button type="submit" id="registerButton">
+                Request OTP
             </button>
 
         </form>
 
-        <!-- Login Link -->
         <p class="login-link">
-
             Already have an account?
-
-            <a href="/login">
-                Sign in
-            </a>
-
+            <a href="/login">Sign in</a>
         </p>
 
-        <!-- Footer -->
         <footer class="footer">
             Clean Energy | Sustainable Future
         </footer>
 
     </main>
-
 </body>
 </html>
