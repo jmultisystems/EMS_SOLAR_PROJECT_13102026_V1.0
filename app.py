@@ -795,9 +795,49 @@ def energy_meter_data_page():
           return send_from_directory(BASE_DIR, "energy_meter_data.html")
 
 
+@app.get("/plant_data")
+
+@app.get("/plant_data.html")
+
+def plant_data_page():
+
+          return send_from_directory(BASE_DIR, "plant_data.html")
 
 
+@app.get("/inverter_data")
 
+@app.get("/inverter_data.html")
+
+def inverter_data_page():
+
+          return send_from_directory(BASE_DIR, "inverter_data.html")
+
+
+@app.get("/bess_data")
+
+@app.get("/bess_data.html")
+
+def bess_data_page():
+
+          return send_from_directory(BASE_DIR, "bess_data.html")
+
+
+@app.get("/substation_data")
+
+@app.get("/substation_data.html")
+
+def substation_data_page():
+
+          return send_from_directory(BASE_DIR, "substation_data.html")
+
+
+@app.get("/weather_data")
+
+@app.get("/weather_data.html")
+
+def weather_data_page():
+
+          return send_from_directory(BASE_DIR, "weather_data.html")
 # --------------------------------------------------
 
 # 10. CSS FILE ROUTES
@@ -813,6 +853,17 @@ def energy_meter_data_page():
 @app.get("/dashboard.css")
 
 @app.get("/energy_meter_data.css")
+
+@app.get("/plant_data.css")
+
+@app.get("/inverter_data.css")
+
+@app.get("/bess_data.css")
+
+@app.get("/substation_data.css")
+
+@app.get("/weather_data.css")
+
 
 def css_files():
 
@@ -842,6 +893,17 @@ def css_files():
 
 @app.get("/energy_meter_data.js")
 
+@app.get("/plant_data.js")
+
+@app.get("/inverter_data.js")
+
+@app.get("/bess_data.js")
+
+@app.get("/substation_data.js")
+
+@app.get("/weather_data.js")
+
+
 def javascript_files():
 
           return send_from_directory(
@@ -851,10 +913,6 @@ def javascript_files():
                     request.path.lstrip("/")
 
           )
-
-
-
-
 
 # --------------------------------------------------
 
