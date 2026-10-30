@@ -7,7 +7,7 @@
 
     <title>EMS for Solar - Login</title>
 
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="/login.css">
 </head>
 <body>
 
@@ -21,17 +21,17 @@
     <!-- Login form -->
     <div class="login-container">
 
-<div class="logo-container">
-    <img src="jove_logo.png"
-         alt="Company Logo"
-         class="company-logo">
-</div>
+        <div class="logo-container">
+            <img src="/jove_logo.png"
+                 alt="Jove Company Logo"
+                 class="company-logo">
+        </div>
 
-<h1>ENERGY MANAGEMENT SYSTEM</h1>
+        <h1>ENERGY MANAGEMENT SYSTEM</h1>
 
         <p>Login</p>
 
-        <form action="/login" method="POST">
+        <form id="loginForm">
 
             <label for="email">Email Address</label>
             <input
@@ -51,21 +51,88 @@
                 required
             >
 
-            <button type="submit">
-                 Login 
+            <button type="submit" id="loginButton">
+                Login
             </button>
 
         </form>
 
+        <p id="loginMessage" role="alert"></p>
+
         <p class="register-link">
             Don't have an account?
-            <a href="register.html">Create New Account</a>
-        </p>
-        <p class="register-link">
-            <a href="dashboard.html"> dashboard</a>
+            <a href="/register">Create New Account</a>
         </p>
 
     </div>
+
+    <!-- Login API integration -->
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const loginButton = document.getElementById("loginButton");
+        const loginMessage = document.getElementById("loginMessage");
+
+        loginForm.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            loginButton.disabled = true;
+            loginButton.textContent = "Logging in...";
+            loginMessage.textContent = "";
+
+            try {
+
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || data.error || "Invalid email or password."
+                    );
+                }
+
+                if (!data.access_token) {
+                    throw new Error("Login succeeded but authentication token was not received.");
+                }
+
+                // Store JWT token
+                localStorage.setItem("access_token", data.access_token);
+
+                // Store user information
+                if (data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                }
+
+                loginMessage.style.color = "green";
+                loginMessage.textContent = "Login successful. Redirecting...";
+
+                window.location.href = "/dashboard";
+
+            } catch (error) {
+
+                loginMessage.style.color = "red";
+                loginMessage.textContent = error.message;
+
+                loginButton.disabled = false;
+                loginButton.textContent = "Login";
+
+            }
+
+        });
+    </script>
 
 </body>
 </html>
