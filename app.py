@@ -62,10 +62,10 @@ if missing_vars:
         + ", ".join(missing_vars)
     )
 
-
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
+
 
 # --------------------------------------------------
 # 2. AIVEN MYSQL SSL CONFIGURATION
@@ -92,7 +92,6 @@ else:
 
     ssl_ca_path = str(ca_path)
 
-
 database_url = URL.create(
     "mysql+pymysql",
     username=os.getenv("DB_USER"),
@@ -104,6 +103,7 @@ database_url = URL.create(
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
@@ -150,6 +150,7 @@ limiter = Limiter(
     storage_uri="memory://",
     default_limits=[],
 )
+
 
 # --------------------------------------------------
 # 5. EMAIL CONFIGURATION
@@ -226,6 +227,8 @@ Jove EMS
             "Gmail SMTP email delivery failed."
         )
         raise
+
+
 # --------------------------------------------------
 # 6. USER DATABASE MODEL
 # --------------------------------------------------
@@ -449,6 +452,7 @@ def database_health_check():
         }), 200
 
     except Exception:
+        db.session.rollback()
         app.logger.exception("Database health check failed")
 
         return jsonify({
@@ -554,7 +558,9 @@ def request_registration_otp():
             )
 
         except Exception:
-            app.logger.exception("Admin OTP email sending failed")
+            app.logger.exception(
+                "Admin OTP email sending failed"
+            )
 
             db.session.delete(pending)
             db.session.commit()
@@ -654,7 +660,6 @@ def verify_registration_otp():
         }), 400
 
     try:
-        # Lock the pending registration row during verification.
         pending = (
             PendingRegistration.query
             .filter_by(email=email)
@@ -705,7 +710,6 @@ def verify_registration_otp():
                 "error": f"Incorrect OTP. {remaining} attempts remaining."
             }), 400
 
-        # Confirm the details match the pending request.
         if (
             pending.full_name != full_name
             or pending.company_name != company_name
