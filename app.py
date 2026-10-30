@@ -65,16 +65,20 @@ ssl_ca_value = os.environ["DB_SSL_CA"].strip()
 
 if "-----BEGIN CERTIFICATE-----" in ssl_ca_value:
     ssl_ca_value = ssl_ca_value.replace("\\n", "\n")
+
     ssl_ca = "/tmp/jove_ems_aiven_ca.pem"
 
     with open(ssl_ca, "w", encoding="utf-8") as cert_file:
         cert_file.write(ssl_ca_value)
+
         if not ssl_ca_value.endswith("\n"):
             cert_file.write("\n")
 else:
     ssl_ca_path = Path(ssl_ca_value)
+
     if not ssl_ca_path.is_absolute():
         ssl_ca_path = BASE_DIR / ssl_ca_path
+
     ssl_ca = str(ssl_ca_path)
 
 if not os.path.isfile(ssl_ca):
@@ -89,7 +93,9 @@ if not os.path.isfile(ssl_ca):
 try:
     database_port = int(os.environ["DB_PORT"])
 except ValueError as exc:
-    raise RuntimeError("DB_PORT must be a valid port number.") from exc
+    raise RuntimeError(
+        "DB_PORT must be a valid port number."
+    ) from exc
 
 database_url = URL.create(
     "mysql+pymysql",
@@ -106,7 +112,9 @@ app.config.update(
     SQLALCHEMY_ENGINE_OPTIONS={
         "pool_pre_ping": True,
         "connect_args": {
-            "ssl": {"ca": ssl_ca}
+            "ssl": {
+                "ca": ssl_ca
+            }
         },
     },
 )
@@ -141,9 +149,8 @@ limiter = Limiter(
 )
 
 # --------------------------------------------------
-# 6. Serve frontend pages
+# 6. Frontend pages
 # --------------------------------------------------
-
 
 @app.get("/")
 @app.get("/index.html")
@@ -163,30 +170,34 @@ def register_page():
 def dashboard_page():
     return send_from_directory(str(BASE_DIR), "dashboard.html")
 
+
 @app.get("/login.css")
 def login_css():
     return send_from_directory(str(BASE_DIR), "login.css")
 
+
 @app.get("/register.css")
 def register_css():
     return send_from_directory(str(BASE_DIR), "register.css")
+
 
 @app.get("/dashboard.css")
 def dashboard_css():
     return send_from_directory(str(BASE_DIR), "dashboard.css")
 
 
-
 @app.get("/register.js")
 def register_js():
     return send_from_directory(str(BASE_DIR), "register.js")
 
+
 @app.get("/dashboard.js")
 def dashboard_js():
     return send_from_directory(str(BASE_DIR), "dashboard.js")
+
+
 # --------------------------------------------------
 # 7. User database model
-# The corresponding users table must exist in MySQL.
 # --------------------------------------------------
 
 class User(db.Model):
@@ -197,9 +208,29 @@ class User(db.Model):
         primary_key=True,
         autoincrement=True,
     )
-    full_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+
+    full_name = db.Column(
+        db.String(100),
+        nullable=False,
+    )
+
+    email = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=False,
+    )
+
+    company_name = db.Column(
+        db.String(150),
+        nullable=False,
+        default="",
+        server_default="",
+    )
+
+    password_hash = db.Column(
+        db.String(255),
+        nullable=False,
+    )
 
     role = db.Column(
         db.Enum("admin", "operator", "viewer"),
@@ -211,6 +242,7 @@ class User(db.Model):
         db.Boolean,
         nullable=False,
         default=True,
+        server_default=text("1"),
     )
 
     created_at = db.Column(
@@ -243,13 +275,16 @@ def health():
 def database_health():
     try:
         db.session.execute(text("SELECT 1"))
+
         return jsonify({
             "service": "Jove EMS API",
             "database": "connected",
         }), 200
+
     except Exception:
         db.session.rollback()
         app.logger.exception("Database health check failed.")
+
         return jsonify({
             "service": "Jove EMS API",
             "database": "unavailable",
@@ -263,26 +298,52 @@ def database_health():
 @app.post("/api/register")
 @limiter.limit("5 per minute")
 def register():
-    data = request.get_json(silent=True) or {}
 
-    full_name = str(data.get("full_name", "")).strip()
-    email = str(data.get("email", "")).strip().lower()
-    password = data.get("password", "")
+    data = request.get_json(silent=True)
 
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "Invalid registration request."
+        }), 400
+
+    full_name = str(data.get("full_name") or "").strip()
+    email = str(data.get("email") or "").strip().lower()
+    company_name = str(data.get("company_name") or "").strip()
+
+    password = data.get("password")
+    confirm_password = data.get("confirm_password")
+
+    # Full name validation
     if not full_name or len(full_name) > 100:
         return jsonify({
             "error": "Enter a valid full name."
         }), 400
 
+    # Email validation
     if (
         len(email) > 255
-        or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
+        or not re.fullmatch(
+            r"[^@\s]+@[^@\s]+\.[^@\s]+",
+            email,
+        )
     ):
         return jsonify({
             "error": "Enter a valid email address."
         }), 400
 
-    if not isinstance(password, str) or len(password) < 12:
+    # Company name validation (optional)
+    if len(company_name) > 150:
+        return jsonify({
+            "error": "Company name must not exceed 150 characters."
+        }), 400
+
+    # Password validation
+    if not isinstance(password, str):
+        return jsonify({
+            "error": "Enter a valid password."
+        }), 400
+
+    if len(password) < 12:
         return jsonify({
             "error": "Password must be at least 12 characters."
         }), 400
@@ -292,8 +353,21 @@ def register():
             "error": "Password is too long."
         }), 400
 
+    # Confirm password validation
+    if not isinstance(confirm_password, str):
+        return jsonify({
+            "error": "Please confirm your password."
+        }), 400
+
+    if password != confirm_password:
+        return jsonify({
+            "error": "Password and confirm password do not match."
+        }), 400
+
     try:
-        if User.query.filter_by(email=email).first():
+        existing_user = User.query.filter_by(email=email).first()
+
+        if existing_user:
             return jsonify({
                 "error": "An account with this email already exists."
             }), 409
@@ -301,6 +375,7 @@ def register():
         user = User(
             full_name=full_name,
             email=email,
+            company_name=company_name,
             password_hash=generate_password_hash(password),
             role="operator",
             is_active=True,
@@ -315,6 +390,8 @@ def register():
 
     except IntegrityError:
         db.session.rollback()
+        app.logger.exception("Registration database integrity error.")
+
         return jsonify({
             "error": "An account with this email already exists."
         }), 409
@@ -322,6 +399,7 @@ def register():
     except Exception:
         db.session.rollback()
         app.logger.exception("User registration failed.")
+
         return jsonify({
             "error": "Unable to create the account. Please try again."
         }), 500
@@ -334,10 +412,16 @@ def register():
 @app.post("/api/login")
 @limiter.limit("5 per minute")
 def login():
-    data = request.get_json(silent=True) or {}
 
-    email = str(data.get("email", "")).strip().lower()
-    password = data.get("password", "")
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "Invalid email or password."
+        }), 401
+
+    email = str(data.get("email") or "").strip().lower()
+    password = data.get("password")
 
     if not email or not isinstance(password, str):
         return jsonify({
@@ -356,7 +440,9 @@ def login():
                 "error": "Invalid email or password."
             }), 401
 
-        token = create_access_token(identity=str(user.id))
+        token = create_access_token(
+            identity=str(user.id)
+        )
 
         return jsonify({
             "message": "Login successful",
@@ -365,12 +451,15 @@ def login():
                 "id": user.id,
                 "full_name": user.full_name,
                 "email": user.email,
+                "company_name": user.company_name,
                 "role": user.role,
             },
         }), 200
 
     except Exception:
+        db.session.rollback()
         app.logger.exception("Login failed.")
+
         return jsonify({
             "error": "Unable to process login. Please try again."
         }), 500
@@ -383,6 +472,7 @@ def login():
 @app.get("/api/me")
 @jwt_required()
 def current_user():
+
     user_id = get_jwt_identity()
 
     try:
@@ -397,6 +487,7 @@ def current_user():
             "id": user.id,
             "full_name": user.full_name,
             "email": user.email,
+            "company_name": user.company_name,
             "role": user.role,
         }), 200
 
@@ -406,7 +497,9 @@ def current_user():
         }), 401
 
     except Exception:
+        db.session.rollback()
         app.logger.exception("User verification failed.")
+
         return jsonify({
             "error": "Unable to verify the account."
         }), 500

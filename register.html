@@ -6,28 +6,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="theme-color" content="#064e3b">
+
     <title>Create Account | Jove EMS</title>
 
-    <link rel="stylesheet" href="register.css">
-    <script src="register.js" defer></script>
+    <link rel="stylesheet" href="/register.css">
+    <script src="/register.js" defer></script>
 </head>
 
 <body>
+
     <main class="register-container">
+
+        <!-- Brand -->
         <div class="brand">
-            <div class="brand-icon" aria-hidden="true">J</div>
-            <p class="brand-name">JOVE MULTISYSTEMS</p>
-            <p class="brand-subtitle">Energy Management System</p>
+
+            <div class="brand-icon" aria-hidden="true">
+                J
+            </div>
+
+            <p class="brand-name">
+                JOVE MULTISYSTEMS
+            </p>
+
+            <p class="brand-subtitle">
+                Energy Management System
+            </p>
+
         </div>
 
+        <!-- Page Heading -->
         <header class="page-heading">
+
             <h1>Create Your Account</h1>
-            <p>Register to access the Jove EMS platform.</p>
+
+            <p>
+                Register to access the Jove EMS platform.
+            </p>
+
         </header>
 
+        <!-- Registration Form -->
         <form id="registerForm">
+
+            <!-- Full Name -->
             <div class="form-group">
-                <label for="full_name">Full Name</label>
+
+                <label for="full_name">
+                    Full Name
+                </label>
+
                 <input
                     type="text"
                     id="full_name"
@@ -37,10 +64,16 @@
                     maxlength="100"
                     required
                 >
+
             </div>
 
+            <!-- Email -->
             <div class="form-group">
-                <label for="email">Email Address</label>
+
+                <label for="email">
+                    Email Address
+                </label>
+
                 <input
                     type="email"
                     id="email"
@@ -50,22 +83,35 @@
                     maxlength="255"
                     required
                 >
+
             </div>
 
+            <!-- Company Name -->
             <div class="form-group">
-                <label for="company">Company Name <span class="optional">(Optional)</span></label>
+
+                <label for="company_name">
+                    Company Name
+                    <span class="optional">(Optional)</span>
+                </label>
+
                 <input
                     type="text"
-                    id="company"
-                    name="company"
+                    id="company_name"
+                    name="company_name"
                     placeholder="Enter your company name"
                     autocomplete="organization"
                     maxlength="150"
                 >
+
             </div>
 
+            <!-- Password -->
             <div class="form-group">
-                <label for="password">Password</label>
+
+                <label for="password">
+                    Password
+                </label>
+
                 <input
                     type="password"
                     id="password"
@@ -77,13 +123,20 @@
                     aria-describedby="passwordHint"
                     required
                 >
+
                 <small id="passwordHint">
                     Use at least 12 characters.
                 </small>
+
             </div>
 
+            <!-- Confirm Password -->
             <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
+
+                <label for="confirm_password">
+                    Confirm Password
+                </label>
+
                 <input
                     type="password"
                     id="confirm_password"
@@ -94,24 +147,45 @@
                     maxlength="128"
                     required
                 >
+
             </div>
 
-            <div id="message" class="message" role="status"
-                 aria-live="polite" hidden></div>
+            <!-- Status Message -->
+            <div
+                id="message"
+                class="message"
+                role="status"
+                aria-live="polite"
+                hidden
+            ></div>
 
-            <button type="submit" id="registerButton">
+            <!-- Submit Button -->
+            <button
+                type="submit"
+                id="registerButton"
+            >
                 Create Account
             </button>
+
         </form>
 
+        <!-- Login Link -->
         <p class="login-link">
+
             Already have an account?
-            <a href="/login">Sign in</a>
+
+            <a href="/login">
+                Sign in
+            </a>
+
         </p>
 
+        <!-- Footer -->
         <footer class="footer">
             Clean Energy | Sustainable Future
         </footer>
+
     </main>
+
 </body>
 </html>

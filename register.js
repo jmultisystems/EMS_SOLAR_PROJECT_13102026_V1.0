@@ -1,4 +1,9 @@
+
 "use strict";
+
+// --------------------------------------------------
+// 1. HTML Elements
+// --------------------------------------------------
 
 const form = document.getElementById("registerForm");
 const message = document.getElementById("message");
@@ -6,11 +11,14 @@ const button = document.getElementById("registerButton");
 
 const fullNameInput = document.getElementById("full_name");
 const emailInput = document.getElementById("email");
-const companyInput = document.getElementById("company");
+const companyInput = document.getElementById("company_name");
 const passwordInput = document.getElementById("password");
 const confirmPasswordInput = document.getElementById("confirm_password");
 
-// Show a message to the user.
+// --------------------------------------------------
+// 2. Message Functions
+// --------------------------------------------------
+
 function showMessage(text, type = "error") {
     message.textContent = text;
     message.className = `message ${type}`;
@@ -23,31 +31,51 @@ function clearMessage() {
     message.hidden = true;
 }
 
-// Submit registration details to the Flask backend.
+// --------------------------------------------------
+// 3. Registration Form Submission
+// --------------------------------------------------
+
 form.addEventListener("submit", async (event) => {
+
     event.preventDefault();
     clearMessage();
 
+    // Collect form values
     const full_name = fullNameInput.value.trim();
     const email = emailInput.value.trim().toLowerCase();
-    const company = companyInput.value.trim();
+    const company_name = companyInput.value.trim();
     const password = passwordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
+    const confirm_password = confirmPasswordInput.value;
 
-    // Validate required fields.
-    if (!full_name || !email || !password || !confirmPassword) {
+    // --------------------------------------------------
+    // 4. Frontend Validation
+    // --------------------------------------------------
+
+    if (!full_name || !email || !password || !confirm_password) {
         showMessage("Please complete all required fields.");
         return;
     }
 
-    // Validate email format.
+    if (full_name.length > 100) {
+        showMessage("Full name must not exceed 100 characters.");
+        fullNameInput.focus();
+        return;
+    }
+
+    if (company_name.length > 150) {
+        showMessage("Company name must not exceed 150 characters.");
+        companyInput.focus();
+        return;
+    }
+
+    // Email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showMessage("Please enter a valid email address.");
         emailInput.focus();
         return;
     }
 
-    // Validate password length.
+    // Password validation
     if (password.length < 12) {
         showMessage("Your password must contain at least 12 characters.");
         passwordInput.focus();
@@ -60,34 +88,51 @@ form.addEventListener("submit", async (event) => {
         return;
     }
 
-    // Confirm password.
-    if (password !== confirmPassword) {
+    // Confirm password validation
+    if (password !== confirm_password) {
         showMessage("Passwords do not match.");
         confirmPasswordInput.focus();
         return;
     }
 
+    // --------------------------------------------------
+    // 5. Disable Submit Button
+    // --------------------------------------------------
+
     button.disabled = true;
     button.textContent = "Creating account...";
 
     try {
+
+        // --------------------------------------------------
+        // 6. Send Registration Request
+        // --------------------------------------------------
+
         const response = await fetch("/api/register", {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             },
+
             credentials: "same-origin",
+
             body: JSON.stringify({
                 full_name: full_name,
                 email: email,
+                company_name: company_name,
                 password: password,
-                company: company
+                confirm_password: confirm_password
             })
         });
 
-        // Read the response safely, even if the server returns HTML.
+        // --------------------------------------------------
+        // 7. Process Backend Response
+        // --------------------------------------------------
+
         const responseText = await response.text();
+
         let result = {};
 
         try {
@@ -97,36 +142,17 @@ form.addEventListener("submit", async (event) => {
         }
 
         if (!response.ok) {
-            if (response.status === 409) {
-                throw new Error(
-                    result.message ||
-                    result.error ||
-                    "An account with this email already exists."
-                );
-            }
-
-            if (response.status === 400) {
-                throw new Error(
-                    result.message ||
-                    result.error ||
-                    "Please check your registration details."
-                );
-            }
-
-            if (response.status >= 500) {
-                throw new Error(
-                    result.message ||
-                    result.error ||
-                    "Server error. Please try again later."
-                );
-            }
 
             throw new Error(
-                result.message ||
                 result.error ||
+                result.message ||
                 `Registration failed (HTTP ${response.status}).`
             );
         }
+
+        // --------------------------------------------------
+        // 8. Registration Success
+        // --------------------------------------------------
 
         showMessage(
             result.message ||
@@ -136,29 +162,40 @@ form.addEventListener("submit", async (event) => {
 
         form.reset();
 
-        // Prevent duplicate submissions while redirecting.
         button.textContent = "Registration Successful";
 
+        // Redirect to login page
         window.setTimeout(() => {
             window.location.href = "/login";
         }, 1500);
 
     } catch (error) {
+
+        console.error("Registration error:", error);
+
         if (error instanceof TypeError) {
+
             showMessage(
-                "Unable to connect to the server. Check your connection and try again."
+                "Unable to connect to the server. Please check your connection."
             );
+
         } else {
+
             showMessage(
                 error.message ||
                 "An unexpected error occurred. Please try again."
             );
         }
+
     } finally {
-        // Do not re-enable the button during the success redirect.
+
+        // Keep button disabled after successful registration
         if (!message.classList.contains("success")) {
+
             button.disabled = false;
             button.textContent = "Create Account";
+
         }
     }
+
 });
