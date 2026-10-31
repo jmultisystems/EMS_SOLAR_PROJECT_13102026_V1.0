@@ -245,43 +245,21 @@ jwt = JWTManager(app)
 # 3. CORS CONFIGURATION
 
 # --------------------------------------------------
-
-
-
 frontend_origins = [
-
-          origin.strip()
-
-          for origin in os.getenv("FRONTEND_ORIGIN", "").split(",")
-
-          if origin.strip()
-
+    origin.strip().rstrip("/")
+    for origin in os.getenv("FRONTEND_ORIGIN", "").split(",")
+    if origin.strip()
 ]
 
-
-
 CORS(
-
-          app,
-
-          resources={
-
-                    r"/api/\*": {
-
-                              "origins": frontend_origins
-
-                    }
-
-          },
-
-          supports_credentials=True,
-
+    app,
+    resources={
+        r"/api/.*": {
+            "origins": frontend_origins
+        }
+    },
+    supports_credentials=True,
 )
-
-
-
-
-
 # --------------------------------------------------
 
 # 4. RATE LIMITER

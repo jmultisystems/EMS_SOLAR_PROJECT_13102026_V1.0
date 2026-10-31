@@ -1,190 +1,548 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solar EMS Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jove EMS | Energy Management System</title>
+
+    <link rel="stylesheet" href="/dashboard.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/dashboard.js" defer></script>
 </head>
+
 <body>
+
 <div class="app">
-  <aside class="sidebar" id="sidebar">
-   <a class="brand" href="#" aria-label="Company home">
-  <img src="jove_logo.png" alt="Company Logo" class="company-logo">
-  <div>
-    <strong>Jove Multisystems Pvt Ltd</strong>
-    <small>Clean Energy | Sustainable Future</small>
-  </div>
-</a>
 
-    <nav class="navigation">
-      <a href="#dashboard" class="nav-item active"><span class="nav-icon">⌂</span><span>Dashboard</span></a>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
 
-      <div class="nav-group">
-        <button class="nav-item nav-toggle" aria-expanded="false">
-          <span class="nav-icon">▥</span><span>Main EMS Data</span><span class="chevron">⌄</span>
-        </button>
-        <div class="submenu">
-          <a href="plant_data.html" class="subnav-item active-sub">Plant Datas</a>
-          <a href="inverter_data.html" class="subnav-item">Inverter Datas</a>
-          <a href="energy_meter_data.html" class="subnav-item">Energy Meter Datas</a>
-          <a href="weather_data.html" class="subnav-item">Weather Datas</a>
-          <a href="#graph" class="subnav-item">BESS Datas</a>
-          <a href="#graph" class="subnav-item">Substation Datas</a>
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="nav-item nav-toggle" aria-expanded="false">
-          <span class="nav-icon">▦</span><span>Basic Tabular View</span><span class="chevron">⌄</span>
-        </button>
-        <div class="submenu">
-          <a href="#tableView" class="subnav-item">Plant Data Table</a>
-          <a href="#tableView" class="subnav-item">Inverter Data Table</a>
-          <a href="#tableView" class="subnav-item">Energymeter Data Table</a>
-          <a href="#tableView" class="subnav-item">Weather Data Table</a>
-          <a href="#tableView" class="subnav-item">BESS Data Table</a>
-          <a href="#tableView" class="subnav-item">Substation Data Table</a>
-          <a href="#tableView" class="subnav-item">Alarm Data Table</a>
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="nav-item nav-toggle" aria-expanded="false">
-          <span class="nav-icon">⚙</span><span>Plant Config</span><span class="chevron">⌄</span>
-        </button>
-        <div class="submenu">
-          <a href="#general-data" class="subnav-item">Plant Details</a>
-          <a href="#general-data" class="subnav-item">Device Settings</a>
-        </div>
-      </div>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <div class="solar-scene">
-        <div class="scene-sun"></div>
-        <div class="solar-panel panel-one"></div>
-        <div class="solar-panel panel-two"></div>
-        <div class="scene-hills"></div>
-      </div>
-     <a class="brand footer-brand" href="#">
-  <img src="jove_logo.png" alt="Company Logo" class="company-logo">
-  <div>
-    <strong>Jove Multisystems Pvt Ltd</strong>
-    <small>Solar Energy Solutions</small>
-  </div>
-</a>
-      <div class="sidebar-footer">
-        <button title="Cloud connection" aria-label="Cloud connection">♧</button>
-        <button title="Call support" aria-label="Call support">☎</button>
-        <button title="Information" aria-label="Information">ⓘ</button>
-        <button title="Help" aria-label="Help">▣</button>
-      </div>
-    </div>
-  </aside>
-
-  <main class="main-content" id="dashboard">
-    <header class="top-header">
-      <button class="menu-button" id="menuButton" aria-label="Toggle sidebar">☰</button>
-      <select class="plant-select" id="plantSelect" aria-label="Select plant">
-        <option value="gaya">▦ &nbsp;1. Solar Plant 1</option>
-        <option value="plant2">▦ &nbsp;2. Solar Plant 2</option>
-        <option value="plant3">▦ &nbsp;3. Solar Plant 3</option>
-      </select>
-      <div class="header-spacer"></div>
-      <div class="header-brand">
-  <img src="jove_logo.png" alt="Company Logo" class="header-logo">
-  <strong>Jove Multisystems Pvt Ltd</strong>
-</div>
-      <select class="language-select" aria-label="Language">
-        <option>🌐 &nbsp; EN</option><option>தமிழ்</option>
-      </select>
-      <button class="profile-icon" title="User profile">♟</button>
-    </header>
-
-    <section class="summary-bar">
-      <div class="summary-item"><div class="summary-icon blue-icon">▦</div><div><span>Last Log Time <small>(Auto refresh)</small></span><strong id="lastLog">10/12/2026 10:00</strong></div></div>
-      <div class="summary-item"><div class="summary-icon green-icon">ϟ</div><div><span>Solar Power</span><strong id="solarPower">3,950.417 kW</strong></div></div>
-      <div class="summary-item"><div class="summary-icon amber-icon">☀</div><div><span>Day Gen</span><strong id="dayGen">5,879.750 kWh</strong></div></div>
-      <div class="summary-item"><div class="summary-icon purple-icon">▦</div><div><span>Yesterday Gen</span><strong id="yesterdayGen">30,704.750 kWh</strong></div></div>
-      <div class="summary-item"><div class="summary-icon cyan-icon">▦</div><div><span>Month Gen</span><strong id="monthGen">260,978.000 kWh</strong></div></div>
-      <div class="summary-item"><div class="summary-icon blue-icon">↗</div><div><span>CUF</span><strong id="cuf">3.500 %</strong></div></div>
-      <div class="total-generation"><div class="summary-icon green-icon">❧</div><div><span>Total Generation</span><strong id="totalGen">3,484,480 kWh</strong></div><div class="solar-art">▱ ▱ ▱ <span>☀</span></div></div>
-    </section>
-
-    <div class="dashboard-body">
-      <section class="plant-section">
-        <div class="section-title"><span class="leaf">❧</span> Plant <span class="live-pill"><i></i> LIVE</span></div>
-        <div class="view-tabs">
-          <button class="tab active" data-view="panel">▦ &nbsp; Panel</button>
-          <button class="tab" data-view="table">▤ &nbsp; Table</button>
-        </div>
-
-        <section class="kpi-grid" id="kpiGrid">
-          <article class="kpi-card kpi-purple">
-            <div class="kpi-top"><span class="kpi-icon">☼</span><span class="faint-icon">☁</span></div>
-            <div class="metric-pair"><div><strong id="irradiance">701.000</strong><span>IRR (W/m²)</span></div><div><strong id="insolation">1.057</strong><span>INS (kWh/m²/Day)</span></div></div>
-          </article>
-          <article class="kpi-card kpi-green">
-            <div class="kpi-top"><span class="kpi-icon">▥</span><span class="faint-icon">↗</span></div>
-            <div class="metric-pair"><div><strong id="dayPR">78.525</strong><span>Day PR (%)</span></div><div><strong id="monthPR">79.933</strong><span>Month PR (%)</span></div></div>
-          </article>
-          <article class="kpi-card kpi-orange">
-            <div class="kpi-top"><span class="kpi-icon">♨</span><span class="faint-icon">☼</span></div>
-            <div class="metric-pair"><div><strong id="ambientTemp">27.861</strong><span>Amb (°C)</span></div><div><strong id="moduleTemp">31.780</strong><span>Mod (°C)</span></div></div>
-          </article>
-          <article class="kpi-card kpi-blue">
-            <div class="kpi-top"><span class="kpi-icon">❧</span><span class="faint-icon">▤</span></div>
-            <div class="metric-pair"><div><strong id="co2">2.875 KTon</strong><span>CO₂ Reduction</span></div><div><strong id="savings">₹1.063 Cr</strong><span>Savings</span></div></div>
-          </article>
-        </section>
-
-        <section class="content-grid" id="panelView">
-          <article class="panel graph-panel" id="graph">
-            <div class="panel-heading"><h2>▥ &nbsp;Plant Line Graph</h2><span class="status-dot">● Online</span></div>
-            <div class="chart-controls">
-              <label for="graphMetric">Select Options</label>
-              <select id="graphMetric">
-                <option value="power">Solar Power (kW)</option>
-                <option value="irradiance">Irradiance (W/m²)</option>
-                <option value="temperature">Module Temperature (°C)</option>
-                <option value="generation">Energy Generation (kWh)</option>
-              </select>
-              <div class="range-buttons"><button class="range active" data-range="today">Today</button><button class="range" data-range="week">Week</button><button class="range" data-range="month">Month</button><button class="range" data-range="year">Year</button></div>
+        <a href="/dashboard" class="brand">
+            <img src="/jove_logo.png" class="company-logo" alt="Jove Logo">
+            <div>
+                <strong>JOVE MULTISYSTEMS</strong>
+                <small>Energy Management System</small>
             </div>
-            <div class="chart-container"><canvas id="plantChart"></canvas></div>
-          </article>
+        </a>
 
-          <article class="panel general-panel" id="general-data">
-            <div class="panel-heading"><h2>▤ &nbsp;General Data</h2><span class="more-button">•••</span></div>
-            <div class="general-grid">
-              <div class="data-card"><div class="data-title"><span class="data-icon">ϟ</span><b>Capacity</b></div><div class="data-row"><span>DC</span><strong>7,084.000 kWp</strong></div><div class="data-row"><span>AC</span><strong>7,000.000 kW</strong></div></div>
-              <div class="data-card"><div class="data-title"><span class="data-icon">◴</span><b>Power</b></div><div class="data-row"><span>DC</span><strong>3,985.200 kW</strong></div><div class="data-row"><span>AC</span><strong>3,950.417 kW</strong></div></div>
-              <div class="data-card"><div class="data-title"><span class="data-icon">▦</span><b>Energy</b></div><div class="data-row"><span>Today</span><strong>5,879.750 kWh</strong></div><div class="data-row"><span>Month</span><strong>260,978 kWh</strong></div></div>
-              <div class="data-card"><div class="data-title"><span class="data-icon">❧</span><b>Environment</b></div><div class="data-row"><span>Ambient</span><strong>27.861 °C</strong></div><div class="data-row"><span>Module</span><strong>31.780 °C</strong></div></div>
+        <nav class="navigation">
+
+            <a href="/dashboard" class="nav-item active">
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle" type="button"
+                        aria-expanded="false">
+                    <span class="nav-icon">☀</span>
+                    <span>Solar Plant</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a href="/plant_data" class="subnav-item">Plant Data</a>
+                    <a href="/inverter_data" class="subnav-item">Inverter Data</a>
+                    <a href="/energy_meter_data" class="subnav-item">Energy Meter Data</a>
+                </div>
             </div>
-          </article>
+
+            <div class="nav-group">
+                <button class="nav-item nav-toggle" type="button"
+                        aria-expanded="false">
+                    <span class="nav-icon">▤</span>
+                    <span>Equipment Data</span>
+                    <span class="chevron">⌄</span>
+                </button>
+
+                <div class="submenu">
+                    <a href="/bess_data" class="subnav-item">BESS Data</a>
+                    <a href="/substation_data" class="subnav-item">Substation Data</a>
+                    <a href="/weather_data" class="subnav-item">Weather Data</a>
+                </div>
+            </div>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="solar-scene">
+                <div class="scene-sun"></div>
+                <div class="scene-hills"></div>
+                <div class="solar-panel panel-one"></div>
+                <div class="solar-panel panel-two"></div>
+            </div>
+
+            <div class="footer-brand">
+                <small>Clean Energy | Sustainable Future</small>
+            </div>
+
+            <div class="sidebar-footer">
+                <button type="button" title="Settings">⚙</button>
+                <button type="button" title="Help">?</button>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP HEADER -->
+        <header class="top-header">
+
+            <button class="menu-button" id="menuButton"
+                    type="button" aria-label="Toggle menu">☰</button>
+
+            <select class="plant-select" id="plantSelect">
+                <option value="AMAS_GAYA_7MW">Solar Plant 1 - AMAS GAYA 7MW</option>
+            </select>
+
+            <div class="header-spacer"></div>
+
+            <div class="header-brand">
+                <img src="/jove_logo.png" class="header-logo" alt="Jove Logo">
+                <strong>Jove Multisystems Pvt Ltd</strong>
+            </div>
+
+            <select class="language-select" aria-label="Language">
+                <option value="en">English</option>
+            </select>
+
+            <!-- USER PROFILE BUTTON -->
+            <div class="user-profile-container">
+
+                <button
+                    type="button"
+                    class="user-profile-button"
+                    id="profileDropdownBtn"
+                    aria-expanded="false"
+                    aria-controls="profileDropdown"
+                    title="View user profile">
+
+                    <span class="profile-avatar" id="profileInitial">U</span>
+
+                    <span class="profile-header-info">
+                        <strong id="profileUserName">Loading...</strong>
+                        <small id="profileUserRole">User</small>
+                    </span>
+
+                    <span class="profile-chevron">⌄</span>
+                </button>
+
+                <!-- PROFILE DROPDOWN -->
+                <div class="profile-dropdown" id="profileDropdown">
+
+                    <div class="profile-dropdown-heading">
+
+                        <span class="profile-avatar large-avatar"
+                              id="profileInitialLarge">U</span>
+
+                        <div>
+                            <strong id="profileDropdownName">Loading...</strong>
+                            <small id="profileDropdownEmail">Loading...</small>
+                        </div>
+
+                    </div>
+
+                    <div class="profile-divider"></div>
+
+                    <h4>USER PROFILE INFORMATION</h4>
+
+                    <div class="profile-detail">
+                        <label>User ID</label>
+                        <span id="profileUserId">-</span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <label>Full Name</label>
+                        <span id="profileFullName">-</span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <label>Email Address</label>
+                        <span id="profileEmail">-</span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <label>Company Name</label>
+                        <span id="profileCompany">-</span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <label>User Role</label>
+                        <span id="profileRole">-</span>
+                    </div>
+
+                    <div class="profile-detail">
+                        <label>Account Status</label>
+                        <span id="profileStatus">-</span>
+                    </div>
+
+                    <div class="profile-divider"></div>
+
+                    <button type="button"
+                            class="profile-logout-btn"
+                            id="profileLogoutBtn">
+                        ↪ Logout
+                    </button>
+
+                </div>
+            </div>
+
+        </header>
+
+        <!-- SUMMARY CARDS -->
+        <section class="summary-bar">
+
+            <div class="summary-item">
+                <div class="summary-icon blue-icon">⚡</div>
+                <div>
+                    <span>Installed Capacity</span>
+                    <strong>7,000 kW</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon green-icon">☀</div>
+                <div>
+                    <span>Current Generation</span>
+                    <strong>3,950.417 kW</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon amber-icon">◷</div>
+                <div>
+                    <span>Day Generation</span>
+                    <strong>5,879.750 kWh</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon purple-icon">↗</div>
+                <div>
+                    <span>CUF</span>
+                    <strong>3.500%</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon cyan-icon">◉</div>
+                <div>
+                    <span>Performance Ratio</span>
+                    <strong>78.525%</strong>
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-icon green-icon">✓</div>
+                <div>
+                    <span>Plant Status</span>
+                    <strong>Operational</strong>
+                </div>
+            </div>
+
+            <div class="total-generation">
+                <div>
+                    <span>Total Energy Generation</span>
+                    <strong>5,879.750 kWh</strong>
+                </div>
+                <div class="solar-art">☀ <span>⚡</span></div>
+            </div>
+
         </section>
 
-        <section class="panel table-panel" id="tableView" hidden>
-          <div class="panel-heading"><h2>▤ &nbsp;Plant Data Table</h2><input type="search" id="tableSearch" placeholder="Search parameter..."></div>
-          <div class="table-scroll"><table id="plantTable"><thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Status</th></tr></thead><tbody>
-            <tr><td>Solar Power</td><td>3,950.417</td><td>kW</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Day Generation</td><td>5,879.750</td><td>kWh</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Month Generation</td><td>260,978.000</td><td>kWh</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>CUF</td><td>3.500</td><td>%</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Irradiance</td><td>701.000</td><td>W/m²</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Day Performance Ratio</td><td>78.525</td><td>%</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Ambient Temperature</td><td>27.861</td><td>°C</td><td><span class="table-status">Normal</span></td></tr>
-            <tr><td>Module Temperature</td><td>31.780</td><td>°C</td><td><span class="table-status">Normal</span></td></tr>
-          </tbody></table></div>
+        <!-- DASHBOARD BODY -->
+        <section class="dashboard-body">
+
+            <section class="plant-section">
+
+                <div class="section-title">
+                    <span class="leaf">☘</span>
+                    Solar Plant Performance
+
+                    <span class="live-pill">
+                        <i></i> LIVE MONITORING
+                    </span>
+                </div>
+
+                <!-- VIEW TABS -->
+                <div class="view-tabs">
+                    <button class="tab active" data-view="panel" type="button">
+                        Dashboard View
+                    </button>
+
+                    <button class="tab" data-view="table" type="button">
+                        Table View
+                    </button>
+                </div>
+
+                <!-- PANEL VIEW -->
+                <div id="panelView">
+
+                    <div class="kpi-grid">
+
+                        <div class="kpi-card kpi-purple">
+                            <div class="kpi-top">
+                                <span>DC / AC Capacity</span>
+                                <span class="kpi-icon">⚡</span>
+                            </div>
+                            <div class="metric-pair">
+                                <div>
+                                    <strong>7,084</strong>
+                                    <span>DC (kWp)</span>
+                                </div>
+                                <div>
+                                    <strong>7,000</strong>
+                                    <span>AC (kW)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-green">
+                            <div class="kpi-top">
+                                <span>Energy Generation</span>
+                                <span class="kpi-icon">☀</span>
+                            </div>
+                            <div class="metric-pair">
+                                <div>
+                                    <strong>5,879</strong>
+                                    <span>Day (kWh)</span>
+                                </div>
+                                <div>
+                                    <strong>3,950</strong>
+                                    <span>Power (kW)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-orange">
+                            <div class="kpi-top">
+                                <span>Plant Efficiency</span>
+                                <span class="kpi-icon">◉</span>
+                            </div>
+                            <div class="metric-pair">
+                                <div>
+                                    <strong>78.525%</strong>
+                                    <span>PR</span>
+                                </div>
+                                <div>
+                                    <strong>3.500%</strong>
+                                    <span>CUF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card kpi-blue">
+                            <div class="kpi-top">
+                                <span>Module Temperature</span>
+                                <span class="kpi-icon">🌡</span>
+                            </div>
+                            <div class="metric-pair">
+                                <div>
+                                    <strong>31.78</strong>
+                                    <span>Temperature °C</span>
+                                </div>
+                                <div>
+                                    <strong>701</strong>
+                                    <span>Irradiance W/m²</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CHART AND GENERAL DATA -->
+                    <div class="content-grid">
+
+                        <div class="panel">
+
+                            <div class="panel-heading">
+                                <h2>Plant Performance Trend</h2>
+                                <span class="status-dot">● Sample Data</span>
+                            </div>
+
+                            <div class="chart-controls">
+                                <label for="graphMetric">Parameter</label>
+
+                                <select id="graphMetric">
+                                    <option value="power">Solar Power</option>
+                                    <option value="irradiance">Irradiance</option>
+                                    <option value="temperature">Module Temperature</option>
+                                    <option value="generation">Energy Generation</option>
+                                </select>
+
+                                <div class="range-buttons">
+                                    <button class="range active" data-range="today" type="button">Today</button>
+                                    <button class="range" data-range="week" type="button">Week</button>
+                                    <button class="range" data-range="month" type="button">Month</button>
+                                    <button class="range" data-range="year" type="button">Year</button>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="plantChart"></canvas>
+                            </div>
+
+                        </div>
+
+                        <div class="panel">
+
+                            <div class="panel-heading">
+                                <h2>General Plant Data</h2>
+                            </div>
+
+                            <div class="general-grid">
+
+                                <div class="data-card">
+                                    <div class="data-title">
+                                        <span class="data-icon">☀</span>
+                                        Solar Plant
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Plant Name</span>
+                                        <strong>AMAS GAYA</strong>
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Capacity</span>
+                                        <strong>7 MW</strong>
+                                    </div>
+                                </div>
+
+                                <div class="data-card">
+                                    <div class="data-title">
+                                        <span class="data-icon">⚡</span>
+                                        Power
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Active Power</span>
+                                        <strong>3,950 kW</strong>
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Frequency</span>
+                                        <strong>50 Hz</strong>
+                                    </div>
+                                </div>
+
+                                <div class="data-card">
+                                    <div class="data-title">
+                                        <span class="data-icon">🌡</span>
+                                        Weather
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Irradiance</span>
+                                        <strong>701 W/m²</strong>
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Temperature</span>
+                                        <strong>31.78 °C</strong>
+                                    </div>
+                                </div>
+
+                                <div class="data-card">
+                                    <div class="data-title">
+                                        <span class="data-icon">▤</span>
+                                        Equipment
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Inverter Status</span>
+                                        <strong>Running</strong>
+                                    </div>
+                                    <div class="data-row">
+                                        <span>Communication</span>
+                                        <strong>Online</strong>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TABLE VIEW -->
+                <div class="table-panel" id="tableView" hidden>
+
+                    <div class="panel-heading">
+                        <h2>Plant Data Records</h2>
+
+                        <input
+                            type="search"
+                            id="tableSearch"
+                            placeholder="Search records..."
+                            aria-label="Search plant data">
+                    </div>
+
+                    <div class="table-scroll">
+                        <table id="plantTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Power (kW)</th>
+                                    <th>Irradiance (W/m²)</th>
+                                    <th>Temperature (°C)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td>08:00</td>
+                                    <td>180</td>
+                                    <td>70</td>
+                                    <td>23</td>
+                                    <td><span class="table-status">Normal</span></td>
+                                </tr>
+                                <tr>
+                                    <td>10:00</td>
+                                    <td>1,700</td>
+                                    <td>350</td>
+                                    <td>26</td>
+                                    <td><span class="table-status">Normal</span></td>
+                                </tr>
+                                <tr>
+                                    <td>12:00</td>
+                                    <td>3,650</td>
+                                    <td>650</td>
+                                    <td>30</td>
+                                    <td><span class="table-status">Normal</span></td>
+                                </tr>
+                                <tr>
+                                    <td>14:00</td>
+                                    <td>3,800</td>
+                                    <td>690</td>
+                                    <td>33</td>
+                                    <td><span class="table-status">Normal</span></td>
+                                </tr>
+                                <tr>
+                                    <td>16:00</td>
+                                    <td>1,950</td>
+                                    <td>360</td>
+                                    <td>30</td>
+                                    <td><span class="table-status">Normal</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <footer class="page-footer">
+                <span>© Jove Multisystems Pvt Ltd</span>
+                <span>Clean Energy | Sustainable Future</span>
+                <span>Last Updated: <strong id="lastLog">--</strong></span>
+            </footer>
+
         </section>
-      </section>
-      <footer class="page-footer"><span>© 2026 Energy Management System</span><span>Solar Plant Monitoring Dashboard</span></footer>
-    </div>
-  </main>
+
+    </main>
+
 </div>
-<script src="dashboard.js"></script>
+
 </body>
 </html>
